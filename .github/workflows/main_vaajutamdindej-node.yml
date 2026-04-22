@@ -26,13 +26,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Remove node_modules before upload
+        run: rm -rf node_modules
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
           path: .
-          exclude: |
-            node_modules
 
   deploy:
     runs-on: ubuntu-latest
