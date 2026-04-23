@@ -21,13 +21,13 @@ jobs:
           node-version: '24.x'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
 
-      - name: Remove node_modules before upload
-        run: rm -rf node_modules
+      # Keep node_modules from this job so Azure runs the same Next + native deps as the build (avoids
+      # "prepare is not a function" / route module mismatch when the host reinstalls a different tree).
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
