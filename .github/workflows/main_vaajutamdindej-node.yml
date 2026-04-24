@@ -64,6 +64,9 @@ jobs:
       # SCM_DO_BUILD_DURING_DEPLOYMENT=false  ENABLE_ORYX_BUILD=false
       # and align the stack Node version with 20.x (WEBSITE_NODE_DEFAULT_VERSION ~20 on Windows, or Linux stack).
 
+      # `startup-command` is not supported for Windows Web Apps or publish-profile auth — the deploy
+      # bundle's package.json sets `"start": "node server.js"` so the default `npm start` uses standalone.
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -71,5 +74,4 @@ jobs:
           app-name: 'VaAjutamDinDej-Node'
           slot-name: 'Production'
           package: .
-          startup-command: 'node server.js'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D43F470CE47D452DB6AA5E1A4D3024B7 }}
