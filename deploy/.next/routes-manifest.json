@@ -1,0 +1,155 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/noutate/[id]",
+      "regex": "^/noutate/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/noutate/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/proiect/[id]",
+      "regex": "^/proiect/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/proiect/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/404",
+      "regex": "^/404(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/404(?:/)?$"
+    },
+    {
+      "page": "/contact",
+      "regex": "^/contact(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/contact(?:/)?$"
+    },
+    {
+      "page": "/cum-pot-ajuta",
+      "regex": "^/cum\\-pot\\-ajuta(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cum\\-pot\\-ajuta(?:/)?$"
+    },
+    {
+      "page": "/despre-noi",
+      "regex": "^/despre\\-noi(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/despre\\-noi(?:/)?$"
+    },
+    {
+      "page": "/motive",
+      "regex": "^/motive(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/motive(?:/)?$"
+    },
+    {
+      "page": "/noutati",
+      "regex": "^/noutati(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/noutati(?:/)?$"
+    },
+    {
+      "page": "/parteneri",
+      "regex": "^/parteneri(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/parteneri(?:/)?$"
+    },
+    {
+      "page": "/proiecte",
+      "regex": "^/proiecte(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/proiecte(?:/)?$"
+    },
+    {
+      "page": "/sustinatori",
+      "regex": "^/sustinatori(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sustinatori(?:/)?$"
+    }
+  ],
+  "dataRoutes": [
+    {
+      "page": "/despre-noi",
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/despre-noi\\.json$"
+    },
+    {
+      "page": "/noutate/[id]",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/noutate/([^/]+?)\\.json$",
+      "namedDataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/noutate/(?<nxtPid>[^/]+?)\\.json$"
+    },
+    {
+      "page": "/noutati",
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/noutati\\.json$"
+    },
+    {
+      "page": "/parteneri",
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/parteneri\\.json$"
+    },
+    {
+      "page": "/proiect/[id]",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/proiect/([^/]+?)\\.json$",
+      "namedDataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/proiect/(?<nxtPid>[^/]+?)\\.json$"
+    },
+    {
+      "page": "/proiecte",
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/proiecte\\.json$"
+    },
+    {
+      "page": "/sustinatori",
+      "dataRouteRegex": "^/_next/data/gxA0n516Ej\\-Imv38DSJhm/sustinatori\\.json$"
+    }
+  ],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

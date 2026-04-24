@@ -1,0 +1,1 @@
+(self.webpackChunk_N_E=self.webpackChunk_N_E||[]).push([[53],{4786:(_,n,u)=>{"use strict";u.r(n),u.d(n,{__N_SSP:()=>s,default:()=>t});var s=!0;function t(){return null}},8424:(_,n,u)=>{(window.__NEXT_P=window.__NEXT_P||[]).push(["/sustinatori",function(){return u(4786)}])}},_=>{_.O(0,[636,593,792],()=>_(_.s=8424)),_N_E=_.O()}]);

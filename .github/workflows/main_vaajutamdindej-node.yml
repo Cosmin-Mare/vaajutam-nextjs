@@ -16,9 +16,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '24.x'
+          node-version: '20.x'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -26,14 +27,28 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Keep node_modules from this job so Azure runs the same Next + native deps as the build (avoids
-      # "prepare is not a function" / route module mismatch when the host reinstalls a different tree).
+      # Next standalone + traced `node_modules` — do not deploy full repo: Azure Oryx/npm install on the
+      # host replaces `node_modules` and breaks `.next` ↔ `next` pairing ("prepare is not a function").
+      - name: Assemble standalone deploy folder
+        run: |
+          rm -rf deploy
+          mkdir deploy
+          cp -a .next/standalone/. deploy/
+          mkdir -p deploy/.next/static
+          cp -a .next/static/. deploy/.next/static/
+          cp -a public/. deploy/public/
+          node <<'NODE'
+          const fs = require("fs");
+          const p = JSON.parse(fs.readFileSync("deploy/package.json", "utf8"));
+          p.scripts = { start: "node server.js" };
+          fs.writeFileSync("deploy/package.json", JSON.stringify(p, null, 2));
+          NODE
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: deploy
 
   deploy:
     runs-on: ubuntu-latest
@@ -45,6 +60,10 @@ jobs:
         with:
           name: node-app
 
+      # If the error persists, set these on the Web App (Configuration → Application settings):
+      # SCM_DO_BUILD_DURING_DEPLOYMENT=false  ENABLE_ORYX_BUILD=false
+      # and align the stack Node version with 20.x (WEBSITE_NODE_DEFAULT_VERSION ~20 on Windows, or Linux stack).
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -52,4 +71,5 @@ jobs:
           app-name: 'VaAjutamDinDej-Node'
           slot-name: 'Production'
           package: .
+          startup-command: 'node server.js'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_D43F470CE47D452DB6AA5E1A4D3024B7 }}

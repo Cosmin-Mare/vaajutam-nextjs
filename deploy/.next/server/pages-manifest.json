@@ -1,0 +1,20 @@
+{
+  "/_app": "pages/_app.js",
+  "/_document": "pages/_document.js",
+  "/404": "pages/404.html",
+  "/api/health/db": "pages/api/health/db.js",
+  "/api/newsletter": "pages/api/newsletter.js",
+  "/contact": "pages/contact.html",
+  "/cum-pot-ajuta": "pages/cum-pot-ajuta.html",
+  "/": "pages/index.html",
+  "/motive": "pages/motive.html",
+  "/api/cum-pot-ajuta": "pages/api/cum-pot-ajuta.js",
+  "/parteneri": "pages/parteneri.js",
+  "/proiect/[id]": "pages/proiect/[id].js",
+  "/despre-noi": "pages/despre-noi.js",
+  "/sustinatori": "pages/sustinatori.js",
+  "/_error": "pages/_error.js",
+  "/noutate/[id]": "pages/noutate/[id].js",
+  "/proiecte": "pages/proiecte.js",
+  "/noutati": "pages/noutati.js"
+}
