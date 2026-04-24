@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { JWT } from "google-auth-library";
 import { google } from "googleapis";
 
@@ -156,13 +157,15 @@ export async function uploadPdfToDrive(
   }
 
   const { email, privateKey: key } = jwtCreds;
-  const body = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
+  const buf = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
+  /** Drive multipart upload expects a stream (`pipe`), not a raw Buffer. */
+  const body = Readable.from(buf);
 
   console.info(`${LOG_PREFIX} starting upload`, {
     fileName,
     parentFolderId: parentId,
     clientEmail: email,
-    byteLength: body.byteLength,
+    byteLength: buf.byteLength,
   });
 
   try {
