@@ -1,10 +1,19 @@
 import path from "node:path";
-import type { GetServerSideProps } from "next";
+import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { projectPhotoPaths } from "@/lib/gallery";
+import { SeoHead } from "@/components/site/SeoHead";
 import { splitPostContent } from "@/lib/content";
-import { getProjectById } from "@/lib/queries";
+import { projectPhotoPaths } from "@/lib/gallery";
+import { getProjectById, loadProjects } from "@/lib/queries";
+import { LIST_REVALIDATE } from "@/lib/revalidate";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  excerptFromPlainText,
+  projectCreativeWorkJsonLd,
+  SITE_NAME,
+} from "@/lib/seo";
 
 type ProjectProps = {
   id: number;
@@ -15,7 +24,15 @@ type ProjectProps = {
 
 type PageProps = { project: ProjectProps; photos: string[]; thumbnail: string };
 
-export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => {
+export const getStaticPaths: GetStaticPaths = async () => {
+  const projects = await loadProjects();
+  return {
+    paths: projects.map((p) => ({ params: { id: String(p.id) } })),
+    fallback: "blocking",
+  };
+};
+
+export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
   const raw = ctx.params?.id;
   const id = Number(Array.isArray(raw) ? raw[0] : raw);
   if (Number.isNaN(id)) return { notFound: true };
@@ -37,16 +54,45 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async (ctx) => 
       photos,
       thumbnail,
     },
+    revalidate: LIST_REVALIDATE,
   };
 };
 
 export default function ProiectPage({ project, photos, thumbnail }: PageProps) {
   const contents = splitPostContent(project.content);
+  const description = excerptFromPlainText(project.content);
+  const pagePath = `/proiect/${project.id}`;
+  const pageUrl = absoluteUrl(pagePath);
+  const thumbAbs = absoluteUrl(thumbnail);
+  const crumbs = breadcrumbJsonLd([
+    { name: "Acasă", path: "/" },
+    { name: "Proiecte", path: "/proiecte" },
+    { name: project.title, path: pagePath },
+  ]);
+  const workLd = projectCreativeWorkJsonLd({
+    name: project.title,
+    url: pageUrl,
+    image: thumbAbs,
+    description,
+  });
 
   return (
     <>
+      <SeoHead
+        title={`${project.title} | Proiect | ${SITE_NAME}`}
+        description={description}
+        path={pagePath}
+        ogImagePath={thumbnail}
+      />
       <Head>
-        <title>{`${project.title} | Proiecte`}</title>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(workLd) }}
+        />
       </Head>
       <section id="main">
         <div className="col-12 d-flex justify-content-center pt-3">
@@ -82,14 +128,14 @@ export default function ProiectPage({ project, photos, thumbnail }: PageProps) {
           src={thumbnail}
           className="d-block w-100 project-img"
           id="carousel-img-1"
-          alt=""
+          alt={`Imagine principală: ${project.title}`}
         />
       </div>
       <div className="photos-container">
         <div className="photos">
-          {photos.map((p) => (
+          {photos.map((p, i) => (
             <div className="photo" key={p}>
-              <img src={p} alt="" />
+              <img src={p} alt={`${project.title} — fotografie ${i + 1}`} />
             </div>
           ))}
         </div>

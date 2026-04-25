@@ -1,12 +1,16 @@
-import Head from "next/head";
 import Link from "next/link";
+import { SeoHead } from "@/components/site/SeoHead";
+import { SITE_NAME } from "@/lib/seo";
 
 export default function NotFoundPage() {
   return (
     <>
-      <Head>
-        <title>Eroare 404 | Vă ajutam din Dej</title>
-      </Head>
+      <SeoHead
+        title={`Pagină negăsită (404) | ${SITE_NAME}`}
+        description="Pagina căutată nu există pe site-ul Asociației Vă Ajutăm din Dej."
+        path="/"
+        noindex
+      />
       <div className="px-4 py-5 my-5 text-center">
         <h1 className="display-5 fw-bold text-body-emphasis projects-title">Eroare 404</h1>
         <div className="col-lg-6 mx-auto">

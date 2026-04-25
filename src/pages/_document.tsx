@@ -11,6 +11,7 @@ export default function Document() {
           rel="stylesheet"
         />
         <link rel="icon" href="/images/logo.png" />
+        <link rel="apple-touch-icon" href="/images/logo.png" />
       </Head>
       <body suppressHydrationWarning>
         <Main />

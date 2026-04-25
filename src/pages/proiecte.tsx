@@ -1,11 +1,16 @@
-import type { GetServerSideProps } from "next";
-import Head from "next/head";
+import type { GetStaticProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { SeoHead } from "@/components/site/SeoHead";
 import { loadProjects } from "@/lib/queries";
+import { LIST_REVALIDATE } from "@/lib/revalidate";
+import { SITE_NAME } from "@/lib/seo";
 import type { Project } from "@/lib/types";
 
 type Props = { actual: Project[]; recurrent: Project[]; past: Project[] };
+
+const PAGE_DESCRIPTION =
+  "Proiecte sociale actuale, recurente și încheiate ale asociației Vă Ajutăm din Dej — educație, sănătate și sprijin în comunitate.";
 
 function group(projects: Project[]) {
   const actual: Project[] = [];
@@ -19,10 +24,10 @@ function group(projects: Project[]) {
   return { actual, recurrent, past };
 }
 
-export const getServerSideProps: GetServerSideProps<Props> = async () => {
+export const getStaticProps: GetStaticProps<Props> = async () => {
   const projects = await loadProjects();
   const { actual, recurrent, past } = group(projects);
-  return { props: { actual, recurrent, past } };
+  return { props: { actual, recurrent, past }, revalidate: LIST_REVALIDATE };
 };
 
 function ProjectBlock({
@@ -48,7 +53,7 @@ function ProjectBlock({
                     <img
                       src={`/images/projects/${project.id}/thumbnail.webp`}
                       style={{ objectFit: "fill" }}
-                      alt=""
+                      alt={`Miniatură proiect: ${project.title}`}
                     />
                   </Link>
                   <div className="card-body">
@@ -80,10 +85,13 @@ function ProjectBlock({
 export default function ProiectePage({ actual, recurrent, past }: Props) {
   return (
     <>
-      <Head>
-        <title>Proiecte | Vă ajutam din Dej</title>
-      </Head>
+      <SeoHead
+        title={`Proiecte | ${SITE_NAME}`}
+        description={PAGE_DESCRIPTION}
+        path="/proiecte"
+      />
       <section id="posts">
+        <h1 className="visually-hidden">Proiectele asociației {SITE_NAME}</h1>
         <ProjectBlock title="Proiecte Actuale" list={actual} />
         <div className="pt-3" />
         <ProjectBlock title="Proiecte Recurente" list={recurrent} />
@@ -93,11 +101,11 @@ export default function ProiectePage({ actual, recurrent, past }: Props) {
           <Image
             className="d-block mx-auto mb-4"
             src="/images/logo.png"
-            alt=""
+            alt="Logo Vă ajutăm din Dej"
             width={100}
             height={100}
           />
-          <h1 className="display-5 fw-bold text-body-emphasis projects-title">Vă mulțumim</h1>
+          <h2 className="display-5 fw-bold text-body-emphasis projects-title">Vă mulțumim</h2>
           <p className="lead">Pentru sprijinul acordat proiectelor noastre.</p>
           <div className="d-grid gap-2 d-sm-flex justify-content-sm-center">
             <Link className="btn btn-primary-pink-round btn-lg px-4" href="/noutati">

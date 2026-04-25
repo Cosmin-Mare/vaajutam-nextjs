@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function buildCarouselHtml(isPortrait: boolean) {
   if (isPortrait) {
@@ -15,7 +15,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-9.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -23,7 +23,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-1.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -31,7 +31,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-2.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -39,7 +39,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-3.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -47,7 +47,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-4.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -55,7 +55,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-5.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -63,7 +63,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-7.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -71,7 +71,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-8.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -79,7 +79,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/portrait/carousel-img-10.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
           </div>
@@ -97,7 +97,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="/images/carousel/landscape/carousel-img-1.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -105,7 +105,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-2.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -113,7 +113,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-3.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -121,7 +121,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-4.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -129,7 +129,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-5.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -137,7 +137,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-6.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -145,7 +145,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-7.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -153,7 +153,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-8.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -161,7 +161,7 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-9.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
             <div class="carousel-item">
@@ -169,14 +169,14 @@ function buildCarouselHtml(isPortrait: boolean) {
                 src="images/carousel/landscape/carousel-img-10.webp"
                 class="d-block w-100"
                 id="carousel-img-1"
-                alt="..."
+                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
               />
             </div>
           </div>
         </div>`;
 }
 
-function onResize() {
+function onResize(onReady: () => void) {
   void import("jquery").then((mod) => {
     const $ = mod.default;
     $(".carousel").remove();
@@ -185,19 +185,22 @@ function onResize() {
     } else {
       $("#main").append(buildCarouselHtml(false));
     }
+    onReady();
   });
 }
 
 export function HomeCarousel() {
-  const resize = useCallback(() => onResize(), []);
+  const [carouselReady, setCarouselReady] = useState(false);
+  const markReady = useCallback(() => setCarouselReady(true), []);
 
   useEffect(() => {
-    onResize();
-    window.addEventListener("resize", resize);
+    onResize(markReady);
+    const onWinResize = () => onResize(() => {});
+    window.addEventListener("resize", onWinResize);
     return () => {
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", onWinResize);
     };
-  }, [resize]);
+  }, [markReady]);
 
   return (
     <section id="main" style={{ position: "relative" }}>
@@ -208,6 +211,12 @@ export function HomeCarousel() {
         <h1 className="carousel-title">Vă Ajutăm din Dej</h1>
         <h2 className="carousel-subtitle">Împreună dăruim zâmbete</h2>
       </div>
+      {!carouselReady && (
+        <div
+          className="home-carousel-skeleton"
+          aria-label="Se încarcă caruselul"
+        />
+      )}
     </section>
   );
 }

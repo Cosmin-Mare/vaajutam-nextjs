@@ -1,25 +1,32 @@
-import type { GetServerSideProps } from "next";
-import Head from "next/head";
+import type { GetStaticProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { SeoHead } from "@/components/site/SeoHead";
 import { loadMembers } from "@/lib/queries";
+import { MEMBERS_REVALIDATE } from "@/lib/revalidate";
+import { SITE_NAME } from "@/lib/seo";
 import type { Member } from "@/lib/types";
 
 type Props = { council: Member[]; notCouncil: Member[] };
 
-export const getServerSideProps: GetServerSideProps<Props> = async () => {
+const PAGE_DESCRIPTION =
+  "Cine suntem: Asociația Vă Ajutăm din Dej — voluntariat, obiective sociale și echipa din Dej, județul Cluj.";
+
+export const getStaticProps: GetStaticProps<Props> = async () => {
   const members = await loadMembers();
   const council = members.filter((m) => m.is_council);
   const notCouncil = members.filter((m) => !m.is_council);
-  return { props: { council, notCouncil } };
+  return { props: { council, notCouncil }, revalidate: MEMBERS_REVALIDATE };
 };
 
 export default function DespreNoiPage({ council, notCouncil }: Props) {
   return (
     <>
-      <Head>
-        <title>Despre noi | Vă ajutam din Dej</title>
-      </Head>
+      <SeoHead
+        title={`Despre noi | ${SITE_NAME}`}
+        description={PAGE_DESCRIPTION}
+        path="/despre-noi"
+      />
       <section id="main">
         <div
           className="container-fluid carousel-container bg-white"
@@ -30,7 +37,7 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
         <img
           src="/images/carousel/landscape/carousel-img-1.webp"
           className="d-block w-100 header-img"
-          alt=""
+          alt="Voluntari și activități Vă Ajutăm din Dej"
         />
       </section>
       <section id="about-us">
@@ -38,7 +45,7 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
           <Image
             className="d-block mx-auto mb-4"
             src="/images/logo.png"
-            alt=""
+            alt="Logo Vă ajutăm din Dej"
             width={100}
             height={100}
           />
@@ -111,7 +118,7 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
                 <img
                   src={`/images/members/${member.name.replaceAll(" ", "_")}.webp`}
                   className="pb-2"
-                  alt=""
+                  alt={`Foto ${member.name}`}
                 />
                 <h2>{member.name}</h2>
                 <h3>{member.status}</h3>
@@ -134,7 +141,7 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
                 <img
                   src={`/images/members/${member.name.replaceAll(" ", "_")}.webp`}
                   className="pb-2"
-                  alt=""
+                  alt={`Foto ${member.name}`}
                 />
                 <h2>{member.name}</h2>
                 <h3>{member.status}</h3>

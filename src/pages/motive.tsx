@@ -1,6 +1,7 @@
-import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
+import { SeoHead } from "@/components/site/SeoHead";
+import { SITE_NAME } from "@/lib/seo";
 
 const items = [
   {
@@ -30,12 +31,17 @@ const items = [
   },
 ];
 
+const PAGE_DESCRIPTION =
+  "Cinci motive să sprijini asociația Vă Ajutăm din Dej: impact, transparență, comunitate, proiecte inovatoare și recunoștință.";
+
 export default function MotivePage() {
   return (
     <>
-      <Head>
-        <title>Motive să ajuți | Vă ajutam din Dej</title>
-      </Head>
+      <SeoHead
+        title={`Motive să ajuți | ${SITE_NAME}`}
+        description={PAGE_DESCRIPTION}
+        path="/motive"
+      />
       <section id="main">
         <div
           className="container-fluid carousel-container bg-white"
@@ -46,7 +52,7 @@ export default function MotivePage() {
         <img
           src="/images/carousel/landscape/carousel-img-2.webp"
           className="d-block w-100 header-img"
-          alt=""
+          alt="Motive să ajuți comunitatea din Dej"
         />
       </section>
       <section id="motive">
@@ -57,7 +63,7 @@ export default function MotivePage() {
                 <h1 className="fw-light projects-title">{m.title}</h1>
                 <p className="lead text-body-secondary">{m.text}</p>
               </div>
-              <img src={m.img} alt="" />
+              <img src={m.img} alt={m.title} />
             </div>
           ))}
         </section>
@@ -66,7 +72,7 @@ export default function MotivePage() {
             <Image
               className="d-block mx-auto mb-4"
               src="/images/logo.png"
-              alt=""
+              alt="Logo Vă ajutăm din Dej"
               width={100}
               height={100}
             />

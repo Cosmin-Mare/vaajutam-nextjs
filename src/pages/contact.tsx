@@ -1,11 +1,17 @@
-import Head from "next/head";
+import { SeoHead } from "@/components/site/SeoHead";
+import { SITE_NAME } from "@/lib/seo";
+
+const PAGE_DESCRIPTION =
+  "Contact Asociația Vă Ajutăm din Dej — adresă pe strada Unirii, telefon, email și rețele sociale.";
 
 export default function ContactPage() {
   return (
     <>
-      <Head>
-        <title>Contact | Vă ajutam din Dej</title>
-      </Head>
+      <SeoHead
+        title={`Contact | ${SITE_NAME}`}
+        description={PAGE_DESCRIPTION}
+        path="/contact"
+      />
       <style
         dangerouslySetInnerHTML={{
           __html: `@media screen and (min-width: 769px) { footer { position: fixed; bottom: 0; width: 100%; } }`,

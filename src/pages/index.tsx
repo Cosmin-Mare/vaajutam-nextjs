@@ -1,13 +1,17 @@
-import Head from "next/head";
-import Link from "next/link";
+import { SeoHead } from "@/components/site/SeoHead";
 import { HomeCarousel } from "@/components/home/HomeCarousel";
+import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/seo";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
     <>
-      <Head>
-        <title>Va ajutam din Dej</title>
-      </Head>
+      <SeoHead
+        title={`${SITE_NAME} — asociație caritabilă în Dej, Cluj`}
+        description={DEFAULT_DESCRIPTION}
+        path="/"
+        ogImagePath="/images/carousel/landscape/carousel-img-1.webp"
+      />
       <HomeCarousel />
       <section id="donate">
         <div className="container d-flex button-container flex-wrap">
@@ -32,7 +36,7 @@ export default function HomePage() {
         <section className="text-center container" id="call-to-action">
           <div className="row pt-5">
             <div className="col-lg-8 col-md-8 mx-auto">
-              <h1 className="fw-light projects-title">Proiectele noastre</h1>
+              <h2 className="fw-light projects-title">Proiectele noastre</h2>
               <p className="lead text-body-secondary">
                 Suntem bucuroși să împărtășim cu voi inițiativele noastre, create cu
                 dragoste pentru a aduce schimbări pozitive în comunitatea noastră.

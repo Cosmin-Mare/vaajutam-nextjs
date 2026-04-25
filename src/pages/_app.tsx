@@ -3,18 +3,27 @@ import Head from "next/head";
 import Script from "next/script";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
+import { RouteProgress } from "@/components/site/RouteProgress";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@/styles/globals.css";
+import "@/styles/skeletons.css";
 import "@/styles/site.css";
 
 export default function App({ Component, pageProps }: AppProps) {
+  const siteStructuredData = {
+    "@context": "https://schema.org",
+    "@graph": [organizationJsonLd(), websiteJsonLd()],
+  };
+
   return (
     <>
       <Head>
-        <title>Va ajutam din Dej</title>
-        <meta
-          name="description"
-          content="Asociația Vă Ajutăm din Dej — împreună dăruim zâmbete"
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#cb0069" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteStructuredData) }}
         />
       </Head>
       <Script
@@ -37,6 +46,7 @@ export default function App({ Component, pageProps }: AppProps) {
           `}
       </Script>
       <Header />
+      <RouteProgress />
       <Component {...pageProps} />
       <Footer />
     </>

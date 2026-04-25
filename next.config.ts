@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(nextConfigDir),
   // Tedious is Node-native; bundling it with the Pages API route can break the route module graph in production.
   serverExternalPackages: ["tedious"],
+  async redirects() {
+    return [{ source: "/sustinatori", destination: "/parteneri", permanent: true }];
+  },
 };
 
 export default nextConfig;

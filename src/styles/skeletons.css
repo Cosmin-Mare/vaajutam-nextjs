@@ -1,0 +1,71 @@
+/* Route transition — thin bar while Next.js navigates client-side */
+.route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 10050;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(90deg, #e20074, #00b9cb, #e20074);
+  background-size: 200% 100%;
+  animation: route-progress-slide 0.8s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(226, 0, 116, 0.35);
+}
+
+.route-progress[hidden] {
+  display: none;
+}
+
+@keyframes route-progress-slide {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* Shared pulse for placeholder blocks */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.skeleton-bars {
+  border-radius: 0.375rem;
+  background: #e9ecef;
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+/* Home: mirrors carousel area below hero titles */
+.home-carousel-skeleton {
+  position: relative;
+  width: 100%;
+  min-height: 42vh;
+  margin: 0;
+  background: #f8f9fa;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@media (min-width: 990px) {
+  .home-carousel-skeleton {
+    min-height: 50vh;
+  }
+}
+
+.home-carousel-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 1.5rem 8% 1.5rem 8%;
+  background: linear-gradient(90deg, #e9ecef 0%, #f1f3f4 50%, #e9ecef 100%);
+  background-size: 200% 100%;
+  border-radius: 0.5rem;
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
