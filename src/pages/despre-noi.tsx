@@ -9,6 +9,28 @@ import type { Member } from "@/lib/types";
 
 type Props = { council: Member[]; notCouncil: Member[] };
 
+function TeamMemberTile({ member }: { member: Member }) {
+  const inner = (
+    <div className="member">
+      <img
+        src={member.photoUrl ?? `/images/members/${member.name.replaceAll(" ", "_")}.webp`}
+        className="pb-2"
+        alt={`Foto ${member.name}`}
+      />
+      <h2>{member.name}</h2>
+      <h3>{member.status}</h3>
+    </div>
+  );
+  if (member.link) {
+    return (
+      <a href={member.link} target="_blank" rel="noreferrer">
+        {inner}
+      </a>
+    );
+  }
+  return <div>{inner}</div>;
+}
+
 const PAGE_DESCRIPTION =
   "Cine suntem: Asociația Vă Ajutăm din Dej — voluntariat, obiective sociale și echipa din Dej, județul Cluj.";
 
@@ -108,25 +130,7 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
         </div>
         <div className="team-grid cd council-grid">
           {council.map((member) => (
-            <a
-              key={member.id}
-              href={member.link ?? "#"}
-              target={member.link ? "_blank" : undefined}
-              rel={member.link ? "noreferrer" : undefined}
-            >
-              <div className="member">
-                <img
-                  src={
-                    member.photoUrl ??
-                    `/images/members/${member.name.replaceAll(" ", "_")}.webp`
-                  }
-                  className="pb-2"
-                  alt={`Foto ${member.name}`}
-                />
-                <h2>{member.name}</h2>
-                <h3>{member.status}</h3>
-              </div>
-            </a>
+            <TeamMemberTile key={member.id} member={member} />
           ))}
         </div>
         <div className="members-header">
@@ -134,25 +138,7 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
         </div>
         <div className="team-grid cd">
           {notCouncil.map((member) => (
-            <a
-              key={member.id}
-              href={member.link ?? "#"}
-              target={member.link ? "_blank" : undefined}
-              rel={member.link ? "noreferrer" : undefined}
-            >
-              <div className="member">
-                <img
-                  src={
-                    member.photoUrl ??
-                    `/images/members/${member.name.replaceAll(" ", "_")}.webp`
-                  }
-                  className="pb-2"
-                  alt={`Foto ${member.name}`}
-                />
-                <h2>{member.name}</h2>
-                <h3>{member.status}</h3>
-              </div>
-            </a>
+            <TeamMemberTile key={member.id} member={member} />
           ))}
         </div>
       </section>

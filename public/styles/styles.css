@@ -526,7 +526,8 @@ svg {
   padding-left: 5%;
   padding-right: 5%;
 }
-.team-grid a {
+.team-grid a,
+.team-grid > div {
   text-decoration: none !important;
   color: black !important;
 }

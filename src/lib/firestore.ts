@@ -56,6 +56,16 @@ function coerceBool(v: unknown): boolean {
   return false;
 }
 
+/** Firestore field is `facebookLink`; older docs may use `link`. */
+function socialUrlFromDoc(data: DocumentData): string {
+  const fb = data.facebookLink;
+  const legacy = data.link;
+  const pick = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v.trim() : "");
+  const a = pick(fb);
+  if (a) return a;
+  return pick(legacy);
+}
+
 function docToPost(id: string, data: DocumentData): Post {
   const thumbKey = postThumbField();
   const galleryKey = postGalleryField();
@@ -66,7 +76,7 @@ function docToPost(id: string, data: DocumentData): Post {
     title: String(data.title ?? ""),
     content: String(data.content ?? ""),
     date: coerceDate(data.date),
-    link: String(data.link ?? ""),
+    link: socialUrlFromDoc(data),
     thumbnailUrl: typeof thumb === "string" ? thumb : undefined,
     galleryUrls: Array.isArray(gallery)
       ? gallery.filter((u): u is string => typeof u === "string")
@@ -99,7 +109,10 @@ function docToMember(id: string, data: DocumentData): Member {
     name: String(data.name ?? ""),
     status: String(data.status ?? ""),
     is_council: coerceBool(data.is_council ?? data.isCouncil),
-    link: data.link != null && String(data.link) !== "" ? String(data.link) : null,
+    link: (() => {
+      const u = socialUrlFromDoc(data);
+      return u === "" ? null : u;
+    })(),
     photoUrl: typeof photo === "string" ? photo : undefined,
   };
 }
