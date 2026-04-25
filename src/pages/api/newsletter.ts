@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { insertEmail, isDbConfigured } from "@/lib/db";
+import { isFirebaseConfigured } from "@/lib/firebase-admin";
+import { firestoreInsertNewsletterEmail } from "@/lib/firestore";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -10,8 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const email = String(req.body?.email ?? "").trim();
   if (email) {
     try {
-      if (isDbConfigured()) {
-        await insertEmail(email);
+      if (isFirebaseConfigured()) {
+        await firestoreInsertNewsletterEmail(email);
       }
     } catch (e) {
       console.error("newsletter", e);

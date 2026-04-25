@@ -2,6 +2,7 @@ import type { GetStaticProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { SeoHead } from "@/components/site/SeoHead";
+import { CMS_MEDIA_FALLBACK } from "@/lib/cms-media";
 import { loadProjects } from "@/lib/queries";
 import { LIST_REVALIDATE } from "@/lib/revalidate";
 import { SITE_NAME } from "@/lib/seo";
@@ -51,7 +52,7 @@ function ProjectBlock({
                 <div className="card shadow-sm">
                   <Link className="post-img-link" href={`/proiect/${project.id}`}>
                     <img
-                      src={`/images/projects/${project.id}/thumbnail.webp`}
+                      src={project.thumbnailUrl ?? CMS_MEDIA_FALLBACK}
                       style={{ objectFit: "fill" }}
                       alt={`Miniatură proiect: ${project.title}`}
                     />

@@ -1,10 +1,9 @@
-import path from "node:path";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { SeoHead } from "@/components/site/SeoHead";
+import { resolveProjectGallery } from "@/lib/cms-media";
 import { splitPostContent } from "@/lib/content";
-import { projectPhotoPaths } from "@/lib/gallery";
 import { getProjectById, loadProjects } from "@/lib/queries";
 import { LIST_REVALIDATE } from "@/lib/revalidate";
 import {
@@ -39,10 +38,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
   const project = await getProjectById(id);
   if (!project) return { notFound: true };
 
-  const { photos, thumbnail } = projectPhotoPaths(
-    project.id,
-    path.join(process.cwd(), "public")
-  );
+  const { photos, thumbnail } = resolveProjectGallery(project);
   return {
     props: {
       project: {

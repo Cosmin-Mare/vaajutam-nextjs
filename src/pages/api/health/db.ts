@@ -1,20 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getPosts, isDbConfigured } from "@/lib/db";
+import { isFirebaseConfigured } from "@/lib/firebase-admin";
+import { firestoreGetPosts } from "@/lib/firestore";
 
-/** Quick check: GET /api/health/db — only detailed in development. */
+/** GET /api/health/db — Firestore connectivity (name kept for existing monitors). */
 export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
-  if (!isDbConfigured()) {
+  if (!isFirebaseConfigured()) {
     return res.status(200).json({
       status: "not_configured",
       message:
-        "Set DB_USER, DB_HOST, and DB_PASSWORD in .env.local (root of this app).",
+        "Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_PATH / GOOGLE_APPLICATION_CREDENTIALS.",
     });
   }
   try {
-    const posts = await getPosts();
+    const posts = await firestoreGetPosts();
     return res.status(200).json({
       status: "ok",
       postCount: posts.length,
+      backend: "firestore",
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown error";
@@ -22,10 +24,10 @@ export default async function handler(_req: NextApiRequest, res: NextApiResponse
       status: "error",
       message: msg,
       ...(process.env.NODE_ENV === "development" && {
-        hint: "Try DB_TRUST_SERVER_CERT=1, check Azure firewall allows your IP, and DB_NAME.",
+        hint: "Check Firebase credentials, Firestore API enabled, and rules for the service account.",
       }),
     };
-    if (process.env.DB_DEBUG === "1" || process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development") {
       console.error("[api/health/db]", e);
     }
     return res.status(500).json(body);

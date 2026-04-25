@@ -1,10 +1,9 @@
-import path from "node:path";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { SeoHead } from "@/components/site/SeoHead";
+import { resolvePostGallery } from "@/lib/cms-media";
 import { splitPostContent } from "@/lib/content";
-import { postPhotoPaths } from "@/lib/gallery";
 import { getPostById, loadPosts } from "@/lib/queries";
 import { LIST_REVALIDATE } from "@/lib/revalidate";
 import {
@@ -40,7 +39,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
   const post = await getPostById(id);
   if (!post) return { notFound: true };
 
-  const { photos, thumbnail } = postPhotoPaths(post.id, path.join(process.cwd(), "public"));
+  const { photos, thumbnail } = resolvePostGallery(post);
   const serial: PostProps = {
     ...post,
     date: post.date instanceof Date ? post.date.toISOString() : String(post.date),

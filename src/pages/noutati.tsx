@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { NewsletterSubscribeBlock } from "@/components/noutati/NewsletterSubscribeBlock";
 import { SeoHead } from "@/components/site/SeoHead";
+import { CMS_MEDIA_FALLBACK } from "@/lib/cms-media";
 import { loadPosts } from "@/lib/queries";
 import { LIST_REVALIDATE } from "@/lib/revalidate";
 import { SITE_NAME } from "@/lib/seo";
@@ -13,6 +14,7 @@ type PostRow = {
   content: string;
   date: string;
   link: string;
+  thumbnailUrl?: string;
 };
 
 type Props = { posts: PostRow[] };
@@ -23,7 +25,11 @@ const PAGE_DESCRIPTION =
 export const getStaticProps: GetStaticProps<Props> = async () => {
   const posts = await loadPosts();
   const rows: PostRow[] = posts.map((p) => ({
-    ...p,
+    id: p.id,
+    title: p.title,
+    content: p.content,
+    link: p.link,
+    thumbnailUrl: p.thumbnailUrl,
     date: p.date instanceof Date ? p.date.toISOString() : String(p.date),
   }));
   return { props: { posts: rows }, revalidate: LIST_REVALIDATE };
@@ -57,7 +63,7 @@ export default function NoutatiPage({ posts }: Props) {
                   <div className="card shadow-sm">
                     <Link className="post-img-link" href={`/noutate/${post.id}`}>
                       <img
-                        src={`/images/posts/${post.id}/thumbnail.webp`}
+                        src={post.thumbnailUrl ?? CMS_MEDIA_FALLBACK}
                         alt={`Miniatură articol: ${post.title}`}
                       />
                     </Link>

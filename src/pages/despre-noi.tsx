@@ -116,7 +116,10 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
             >
               <div className="member">
                 <img
-                  src={`/images/members/${member.name.replaceAll(" ", "_")}.webp`}
+                  src={
+                    member.photoUrl ??
+                    `/images/members/${member.name.replaceAll(" ", "_")}.webp`
+                  }
                   className="pb-2"
                   alt={`Foto ${member.name}`}
                 />
@@ -139,7 +142,10 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
             >
               <div className="member">
                 <img
-                  src={`/images/members/${member.name.replaceAll(" ", "_")}.webp`}
+                  src={
+                    member.photoUrl ??
+                    `/images/members/${member.name.replaceAll(" ", "_")}.webp`
+                  }
                   className="pb-2"
                   alt={`Foto ${member.name}`}
                 />

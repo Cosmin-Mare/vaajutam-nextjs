@@ -55,7 +55,7 @@ export function validCNP(p_cnp: string): boolean {
   return cnp[12] === hashResult;
 }
 
-/** SQL Server `bit` / `buffer` as returned by `tedious` (varies by driver version). */
+/** Legacy SQL `bit` / `buffer` shapes (kept for any binary payloads). */
 export function bufferToBinary(v: unknown): boolean {
   if (v === true) return true;
   if (v === false) return false;

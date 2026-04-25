@@ -25,6 +25,9 @@ jobs:
         run: npm ci
 
       - name: Build
+        env:
+          # Required for getStaticProps to load posts/projects from Firestore during CI build.
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: npm run build
 
       # Next standalone + traced `node_modules` — do not deploy full repo: Azure Oryx/npm install on the

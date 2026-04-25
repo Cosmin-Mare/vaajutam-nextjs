@@ -1,7 +1,8 @@
 import formidable from "formidable";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { validCNP } from "@/lib/cnp";
-import { insertEmail, isDbConfigured } from "@/lib/db";
+import { isFirebaseConfigured } from "@/lib/firebase-admin";
+import { firestoreInsertNewsletterEmail } from "@/lib/firestore";
 import { generateDonationPdf } from "@/lib/pdf-donation";
 import {
   driveEnvPresence,
@@ -61,8 +62,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (emailAccept === "on" && email) {
     try {
-      if (isDbConfigured()) {
-        await insertEmail(email);
+      if (isFirebaseConfigured()) {
+        await firestoreInsertNewsletterEmail(email);
       }
     } catch (e) {
       console.error("email insert", e);
