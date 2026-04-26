@@ -137,6 +137,25 @@ footer {
   margin: 0px !important;
 }
 
+/* Credit link: readable and clearly interactive on #e20074 footer */
+footer a.footer-credit-link {
+  color: #fff !important;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.55);
+  text-underline-offset: 0.2em;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+footer a.footer-credit-link:hover {
+  color: #c8f7fc !important;
+  text-decoration-color: #00cee2;
+}
+footer a.footer-credit-link:focus-visible {
+  outline: 2px solid #00cee2;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 .btn-primary-pink {
   background-color: #e20074;
   border-color: #e20074;

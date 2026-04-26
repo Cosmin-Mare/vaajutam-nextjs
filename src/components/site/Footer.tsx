@@ -20,7 +20,15 @@ export function Footer() {
             />
           </Link>
           <span className="mb-3 mb-md-0">
-            © 2026 Vă Ajutăm din Dej | Proiect realizat de Cosmin Mare
+            © 2026 Vă Ajutăm din Dej | Proiect realizat de{" "}
+            <a
+              className="footer-credit-link"
+              href="https://mare-cosmin.ro"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Mare Cosmin
+            </a>
           </span>
         </div>
         <a
