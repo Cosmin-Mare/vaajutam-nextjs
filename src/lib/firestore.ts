@@ -5,7 +5,7 @@ import {
   type Timestamp,
 } from "firebase-admin/firestore";
 import { getAdminApp } from "@/lib/firebase-admin";
-import type { Member, Post, Project } from "@/lib/types";
+import type { Member, Post, Project, SponsorPartner } from "@/lib/types";
 
 function postsCollection(): string {
   return process.env.FIRESTORE_POSTS_COLLECTION?.trim() || "posts";
@@ -18,6 +18,12 @@ function membersCollection(): string {
 }
 function newsletterCollection(): string {
   return process.env.FIRESTORE_NEWSLETTER_COLLECTION?.trim() || "newsletter_emails";
+}
+function sponsorPartnersCollection(): string {
+  return process.env.FIRESTORE_SPONSOR_PARTNERS_COLLECTION?.trim() || "sponsor_partners";
+}
+function sponsorLogoField(): string {
+  return process.env.FIRESTORE_SPONSOR_LOGO_FIELD?.trim() || "logoStorageUrl";
 }
 
 function postThumbField(): string {
@@ -101,6 +107,58 @@ function docToProject(id: string, data: DocumentData): Project {
   };
 }
 
+function pickNonEmptyString(...candidates: unknown[]): string {
+  for (const v of candidates) {
+    if (typeof v === "string" && v.trim() !== "") return v.trim();
+  }
+  return "";
+}
+
+function sponsorRoleFromDoc(data: DocumentData): "sponsor" | "partner" {
+  const raw = data.kind ?? data.category ?? data.role ?? data.group;
+  if (typeof raw === "string") {
+    const s = raw.trim().toLowerCase();
+    if (s === "partner" || s === "partener" || s === "p") return "partner";
+    if (s === "sponsor" || s === "s") return "sponsor";
+  }
+  if (data.isPartner === true || data.partener === true) return "partner";
+  return "sponsor";
+}
+
+function websiteUrlFromDoc(data: DocumentData): string | null {
+  const u = pickNonEmptyString(
+    data.websiteUrl,
+    data.website,
+    data.url,
+    data.externalUrl,
+    data.link
+  );
+  if (!u) return null;
+  if (/^https?:\/\//i.test(u)) return u;
+  return null;
+}
+
+function docToSponsorPartner(id: string, data: DocumentData): SponsorPartner {
+  const logoKey = sponsorLogoField();
+  const logoRaw = data[logoKey];
+  const name = pickNonEmptyString(data.name, data.title, data.companyName) || `ID ${id}`;
+  const orderRaw = data.order ?? data.sortOrder ?? data.rank;
+  const sortKey =
+    typeof orderRaw === "number" && !Number.isNaN(orderRaw)
+      ? orderRaw
+      : typeof orderRaw === "string" && orderRaw.trim() !== ""
+        ? Number.parseFloat(orderRaw) || Number.MAX_SAFE_INTEGER
+        : Number.MAX_SAFE_INTEGER;
+  return {
+    id: Number(id),
+    name,
+    logoUrl: typeof logoRaw === "string" && logoRaw.trim() !== "" ? logoRaw.trim() : undefined,
+    websiteUrl: websiteUrlFromDoc(data),
+    role: sponsorRoleFromDoc(data),
+    sortKey,
+  };
+}
+
 function docToMember(id: string, data: DocumentData): Member {
   const photoKey = memberPhotoField();
   const photo = data[photoKey];
@@ -148,6 +206,16 @@ export async function firestoreGetMembers(): Promise<Member[]> {
   const members = snap.docs.map((d) => docToMember(d.id, d.data()));
   members.sort((a, b) => a.id - b.id);
   return members;
+}
+
+export async function firestoreGetSponsorPartners(): Promise<SponsorPartner[]> {
+  const snap = await db().collection(sponsorPartnersCollection()).get();
+  const rows = snap.docs.map((d) => docToSponsorPartner(d.id, d.data()));
+  rows.sort((a, b) => {
+    if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+    return a.id - b.id;
+  });
+  return rows;
 }
 
 export async function firestoreInsertNewsletterEmail(email: string): Promise<void> {

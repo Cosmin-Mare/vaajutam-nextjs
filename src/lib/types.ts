@@ -27,3 +27,15 @@ export type Project = {
   thumbnailUrl?: string;
   galleryUrls?: string[];
 };
+
+/** Row from `sponsor_partners` (or env collection); shown on /parteneri. */
+export type SponsorPartner = {
+  id: number;
+  name: string;
+  /** Firebase Storage download URL (`logoStorageUrl` in Firestore). */
+  logoUrl?: string;
+  websiteUrl: string | null;
+  role: "sponsor" | "partner";
+  /** Sort order when field `order` / `sortOrder` exists; lower first. */
+  sortKey: number;
+};

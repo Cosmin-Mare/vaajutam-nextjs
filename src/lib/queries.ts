@@ -4,9 +4,10 @@ import {
   firestoreGetPosts,
   firestoreGetProjectById,
   firestoreGetProjects,
+  firestoreGetSponsorPartners,
 } from "@/lib/firestore";
 import { isFirebaseConfigured, warnIfNoFirebase } from "@/lib/firebase-admin";
-import type { Member, Post, Project } from "@/lib/types";
+import type { Member, Post, Project, SponsorPartner } from "@/lib/types";
 
 export async function loadPosts(): Promise<Post[]> {
   if (!isFirebaseConfigured()) {
@@ -43,6 +44,19 @@ export async function loadProjects(): Promise<Project[]> {
     return await firestoreGetProjects();
   } catch (e) {
     console.error("loadProjects", e);
+    return [];
+  }
+}
+
+export async function loadSponsorPartners(): Promise<SponsorPartner[]> {
+  if (!isFirebaseConfigured()) {
+    warnIfNoFirebase();
+    return [];
+  }
+  try {
+    return await firestoreGetSponsorPartners();
+  } catch (e) {
+    console.error("loadSponsorPartners", e);
     return [];
   }
 }
