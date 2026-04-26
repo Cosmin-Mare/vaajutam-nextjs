@@ -4,7 +4,7 @@ import { SITE_NAME } from "@/lib/seo";
 import { CONTACT_EMAIL } from "@/lib/site-contact";
 
 const PAGE_DESCRIPTION =
-  "Contact Asociația Vă Ajutăm din Dej — adresă pe strada Unirii, telefon, email și rețele sociale.";
+  "Ne găsești la Dej (str. Unirii) sau scrie-ne online: telefon, e-mail, Facebook. Trimite un mesaj din formular — răspundem cât de curând putem.";
 
 export default function ContactPage() {
   return (
