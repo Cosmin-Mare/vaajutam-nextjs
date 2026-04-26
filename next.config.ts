@@ -10,7 +10,14 @@ const nextConfig: NextConfig = {
   // Lock tracing to this app when a parent directory also has a lockfile (avoids mixed roots in CI/Azure).
   outputFileTracingRoot: path.join(nextConfigDir),
   async redirects() {
-    return [{ source: "/sustinatori", destination: "/parteneri", permanent: true }];
+    return [
+      { source: "/sustinatori", destination: "/parteneri", permanent: true },
+      {
+        source: "/admin/:path*",
+        destination: "https://va-ajutam-din-dej-admin.vercel.app/:path*",
+        permanent: true,
+      },
+    ];
   },
 };
 
