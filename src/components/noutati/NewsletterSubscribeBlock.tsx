@@ -3,10 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
+type Props = {
+  /**
+   * Path to append `?subscribed=1` after form POST (no query/hash).
+   * Must be stable for SSR: do not read `useRouter` here for the initial tree.
+   */
+  returnTo?: string;
+};
+
 /**
- * Success message from `?subscribed=1` is read on the client so `/noutati` can use static generation (ISR).
+ * Success from `?subscribed=1` is applied in `useEffect` so the first paint
+ * always matches the server and avoids hydration mismatches with ISR.
  */
-export function NewsletterSubscribeBlock() {
+export function NewsletterSubscribeBlock({ returnTo = "/" }: Props) {
   const router = useRouter();
   const [subscribed, setSubscribed] = useState(false);
 
@@ -14,16 +23,6 @@ export function NewsletterSubscribeBlock() {
     if (!router.isReady) return;
     setSubscribed(router.query.subscribed === "1");
   }, [router.isReady, router.query.subscribed]);
-
-  if (!router.isReady) {
-    return (
-      <div
-        className="skeleton-bars mx-auto"
-        style={{ height: 48, maxWidth: 480 }}
-        aria-hidden
-      />
-    );
-  }
 
   if (subscribed) {
     return (
@@ -41,6 +40,7 @@ export function NewsletterSubscribeBlock() {
       action="/api/newsletter"
       method="post"
     >
+      <input type="hidden" name="return_to" value={returnTo} />
       <div className="col-sm-12 col-lg-5">
         <input
           type="email"

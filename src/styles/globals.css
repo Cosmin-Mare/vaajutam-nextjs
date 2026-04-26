@@ -1,4 +1,8 @@
 /* Load order: bootstrap → globals → site.css (see _app.tsx) */
+/* Fixed header: keep in-page / hash targets visible below the bar */
+html {
+  scroll-padding-top: 4.5rem;
+}
 html,
 body {
   max-width: 100vw;

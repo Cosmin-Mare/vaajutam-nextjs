@@ -2,8 +2,28 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
+
+const NAV_LINKS: { href: string; label: string }[] = [
+  { href: "/despre-noi", label: "Despre noi" },
+  { href: "/proiecte", label: "Proiecte" },
+  { href: "/noutati", label: "Noutăți" },
+  { href: "/parteneri", label: "Parteneri" },
+  { href: "/motive", label: "Motive să ajuți" },
+  { href: "/contact", label: "Contact" },
+];
+
+function isNavLinkActive(href: string, pathname: string) {
+  if (href === "/proiecte")
+    return pathname === "/proiecte" || /^\/proiect\/[^/]+/.test(pathname);
+  if (href === "/noutati")
+    return pathname === "/noutati" || /^\/noutate\/[^/]+/.test(pathname);
+  return pathname === href;
+}
 
 export function Header() {
+  const { pathname, isReady } = useRouter();
+
   return (
     <section id="header" className="x-bar">
       <div className="container-fluid navbar-container">
@@ -19,15 +39,9 @@ export function Header() {
                 priority
               />
             </Link>
-            <button
-              type="button"
-              className="btn btn-primary-pink-round portrait"
-              onClick={() => {
-                window.location.href = "/cum-pot-ajuta#donez";
-              }}
-            >
+            <Link className="btn btn-primary-pink-round portrait" href="/cum-pot-ajuta#donez">
               Donează
-            </button>
+            </Link>
             <button
               className="navbar-toggler"
               type="button"
@@ -41,68 +55,37 @@ export function Header() {
             </button>
             <div className="collapse navbar-collapse" id="navbarNavDropdown">
               <ul className="navbar-nav">
-                <li className="nav-item">
-                  <Link className="nav-link" href="/despre-noi">
-                    Despre noi
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" href="/proiecte">
-                    Proiecte
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" href="/noutati">
-                    Noutăți
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" href="/parteneri">
-                    Parteneri
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" href="/motive">
-                    Motive să ajuți
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" href="/contact">
-                    Contact
-                  </Link>
-                </li>
+                {NAV_LINKS.map(({ href, label }) => {
+                  const active = isReady && isNavLinkActive(href, pathname);
+                  return (
+                    <li className="nav-item" key={href}>
+                      <Link
+                        className={`nav-link${active ? " active" : ""}`}
+                        href={href}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  );
+                })}
                 <li className="nav-item d-lg-none">
-                  <button
-                    type="button"
-                    className="btn btn-secondary-pink w-100"
-                    onClick={() => {
-                      window.location.href = "/cum-pot-ajuta";
-                    }}
-                  >
+                  <Link className="btn btn-secondary-pink w-100" href="/cum-pot-ajuta">
                     Cum poți ajuta
-                  </button>
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
-          <button
-            type="button"
-            className="btn btn-secondary-pink landscape"
-            onClick={() => {
-              window.location.href = "/cum-pot-ajuta";
-            }}
-          >
+          <Link className="btn btn-secondary-pink landscape" href="/cum-pot-ajuta">
             Cum Poți Ajuta
-          </button>
-          <button
-            type="button"
+          </Link>
+          <Link
             className="btn btn-primary-pink-round landscape"
-            onClick={() => {
-              window.location.href = "/cum-pot-ajuta#donez";
-            }}
+            href="/cum-pot-ajuta#donez"
           >
             Donează
-          </button>
+          </Link>
         </nav>
       </div>
     </section>

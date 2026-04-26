@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p 8080",
-    "migrate:photos:firebase": "tsx scripts/migrate-photos-to-firebase.ts"
+    "migrate:photos:firebase": "tsx scripts/migrate-photos-to-firebase.ts",
+    "gmail:oauth-token": "tsx scripts/gmail-oauth-refresh-token.ts"
   },
   "dependencies": {
     "@types/jquery": "^4.0.0",

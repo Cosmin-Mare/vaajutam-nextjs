@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useRef } from "react";
+import { CONTACT_EMAIL } from "@/lib/site-contact";
 
 export function DonationSections() {
   const recurrentRef = useRef<HTMLInputElement>(null);
@@ -192,8 +193,8 @@ export function DonationSections() {
                   Contractul de sponsorizare
                 </a>{" "}
                 în 2 exemplare și trimiteți-l la{" "}
-                <a href="mailto:vaajutamdindej@gmail.com" style={{ fontSize: "1.3rem" }}>
-                  vaajutamdindej@gmail.com
+                <a href={`mailto:${CONTACT_EMAIL}`} style={{ fontSize: "1.3rem" }}>
+                  {CONTACT_EMAIL}
                 </a>
               </li>
               <li>
@@ -223,8 +224,8 @@ export function DonationSections() {
             <p className="lead">
               Dacă dorești să ne ajuți și să te alături echipei noastre de voluntari, te așteptăm
               cu drag. Trimite-ne un e-mail la{" "}
-              <a href="mailto:vaajutamdindej@gmail.com" style={{ fontSize: "1.3rem" }}>
-                vaajutamdindej@gmail.com
+              <a href={`mailto:${CONTACT_EMAIL}`} style={{ fontSize: "1.3rem" }}>
+                {CONTACT_EMAIL}
               </a>
             </p>
           </div>

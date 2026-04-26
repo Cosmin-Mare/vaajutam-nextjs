@@ -51,7 +51,7 @@ export default function NoutatiPage({ posts }: Props) {
               Aici găsești cele mai recente noutăți și activități care definesc misiunea noastră.
             </p>
           </div>
-          <NewsletterSubscribeBlock />
+          <NewsletterSubscribeBlock returnTo="/noutati" />
         </div>
       </section>
       <section id="posts">

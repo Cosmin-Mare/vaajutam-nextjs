@@ -1,5 +1,6 @@
 import { SeoHead } from "@/components/site/SeoHead";
 import { HomeCarousel } from "@/components/home/HomeCarousel";
+import { NewsletterSubscribeBlock } from "@/components/noutati/NewsletterSubscribeBlock";
 import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/seo";
 import Link from "next/link";
 
@@ -56,7 +57,15 @@ export default function HomePage() {
           </div>
         </section>
       </section>
-      <section id="newsletter" />
+      <section id="newsletter" className="py-5 bg-body-tertiary">
+        <div className="container text-center">
+          <h2 className="display-5 fw-light projects-title mb-3">Newsletter</h2>
+          <p className="lead text-body-secondary col-lg-8 mx-auto mb-4">
+            Fii la curent cu noutățile și proiectele noastre — abonează-te cu adresa de email.
+          </p>
+          <NewsletterSubscribeBlock returnTo="/" />
+        </div>
+      </section>
     </>
   );
 }

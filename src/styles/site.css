@@ -1,6 +1,7 @@
 body {
   font-family: "Source Sans 3", sans-serif;
 }
+
 a {
   color: #e20074 !important;
   transition: color 0.2s ease-in-out;
@@ -74,9 +75,21 @@ nav > .btn-secondary-pink {
   color: #00b9cb;
 }
 
+/* Current page in main nav (see Header.tsx) */
+.nav-link.active,
+.nav-link.active:hover,
+.nav-link.active:focus {
+  color: #00b9cb !important;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
+}
+
 .btn-primary-pink-round {
   background-color: #e20074;
   border: none;
+  border-radius: 0.25rem;
   color: #fff !important;
   text-align: center;
   transition: background 0.2s ease-in-out;
@@ -120,6 +133,7 @@ hr {
 
 footer {
   background-color: #e20074 !important;
+  color: white !important;
   margin: 0px !important;
 }
 
@@ -291,16 +305,13 @@ footer {
   margin-left: 10px;
 }
 
-footer {
-  color: white !important;
-}
-
 svg {
   fill: white;
 }
 
 .btn-secondary-pink {
   border-color: #e20074;
+  border-radius: 0.25rem;
   color: #e20074;
   text-align: center;
   transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
@@ -578,24 +589,106 @@ svg {
   font-size: 25pt !important;
 }
 
+.contact-page {
+  background: linear-gradient(180deg, rgba(226, 0, 116, 0.04) 0%, transparent 42%);
+}
+
+.contact-page-header {
+  max-width: 36rem;
+}
+
+.contact-page-title {
+  font-size: clamp(1.85rem, 4.5vw, 2.65rem);
+  letter-spacing: -0.02em;
+}
+
+.contact-page-lead {
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  line-height: 1.55;
+}
+
+.letter-spacing-tight {
+  letter-spacing: 0.06em;
+}
+
 .contact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: clamp(1.25rem, 3vw, 2.25rem);
   justify-content: center;
-  align-items: center;
-  padding-left: 5%;
-  padding-right: 5%;
-  padding-top: 20px;
+  align-items: start;
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(0.75rem, 2vw, 1.25rem);
+  padding-right: clamp(0.75rem, 2vw, 1.25rem);
+  padding-top: 0;
+}
+
+.contact-panel {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(226, 0, 116, 0.1);
+  padding: clamp(1.25rem, 3.5vw, 2rem);
+}
+
+.contact-panel--info .contact-text {
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.contact-detail {
+  margin-bottom: 1.1rem;
+}
+
+.contact-detail:last-of-type {
+  margin-bottom: 0;
+}
+
+.contact-detail-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.contact-detail-body {
+  margin-bottom: 0;
+}
+
+.contact-map-wrap {
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 16px rgba(15, 23, 42, 0.08);
+  line-height: 0;
+}
+
+/* Let the page scroll past the map; on hover, wheel pans the map (avoids "stuck" scroll) */
+@media (hover: hover) and (pointer: fine) {
+  .contact-map-wrap .map {
+    pointer-events: none;
+  }
+
+  .contact-map-wrap:hover .map {
+    pointer-events: auto;
+  }
 }
 
 .contact-grid p {
-  font-size: 1.2rem;
+  font-size: inherit;
 }
 
 .contact-grid a {
   color: #e20074;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
 }
+
 .contact-grid a:hover,
 .contact-grid a:focus,
 .contact-grid a:active {
@@ -603,12 +696,22 @@ svg {
 }
 
 .map {
-  width: min(400px, calc(100vw - 50px));
-  height: 300px;
+  display: block;
+  width: 100%;
+  height: min(280px, 38vh);
+  min-height: 220px;
 }
 
-.contact-form {
-  height: 100%;
+.contact-form-heading {
+  font-size: clamp(1.35rem, 3vw, 1.65rem);
+  margin-bottom: 0.35rem;
+}
+
+.contact-form-intro {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #64748b;
+  margin-bottom: 0;
 }
 
 .email-form input {
@@ -1006,7 +1109,13 @@ canvas#signature-canvas {
   }
   .contact-grid {
     grid-template-columns: 1fr !important;
-    margin-bottom: 40px;
+    margin-bottom: 48px;
+    gap: 1.5rem;
+  }
+
+  .contact-page .map {
+    min-height: 200px;
+    height: 220px;
   }
 }
 

@@ -1,3 +1,5 @@
+import { CONTACT_EMAIL } from "@/lib/site-contact";
+
 /** Canonical base URL for production (sitemap, OG, JSON-LD). Override with `NEXT_PUBLIC_SITE_URL` if needed. */
 export const PRODUCTION_SITE_URL = "https://vaajutamdindej.ro";
 
@@ -55,7 +57,7 @@ export function organizationJsonLd() {
     image: absoluteUrl("/images/logo.png"),
     description: DEFAULT_DESCRIPTION,
     sameAs: ["https://www.facebook.com/VoluntariDejeni"],
-    email: "vaajutamdindej@gmail.com",
+    email: CONTACT_EMAIL,
     telephone: "+40723290245",
     address: {
       "@type": "PostalAddress",
