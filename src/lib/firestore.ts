@@ -186,7 +186,7 @@ function docToMember(id: string, data: DocumentData): Member {
       const u = socialUrlFromDoc(data);
       return u === "" ? null : u;
     })(),
-    photoUrl: typeof photo === "string" ? photo : undefined,
+    photoUrl: typeof photo === "string" ? photo : null,
   };
 }
 

@@ -15,8 +15,8 @@ export type Member = {
   status: string;
   is_council: boolean;
   link: string | null;
-  /** Firebase Storage member portrait. */
-  photoUrl?: string;
+  /** Firebase Storage member portrait; `null` when absent (JSON-serializable for SSG props). */
+  photoUrl: string | null;
 };
 
 export type Project = {
