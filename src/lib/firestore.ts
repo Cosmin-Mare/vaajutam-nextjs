@@ -72,13 +72,28 @@ function socialUrlFromDoc(data: DocumentData): string {
   return pick(legacy);
 }
 
+/**
+ * Public id for `/noutate/{id}`: prefers numeric `id` / `postId` on the document (e.g. auto doc ids),
+ * else `Number(firestoreDocId)` so leading-zero ids like "031" still map to 31 in the UI.
+ */
+function postLogicalId(firestoreDocId: string, data: DocumentData): number {
+  const raw = data.id ?? data.postId;
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const n = Number(raw.trim());
+    if (!Number.isNaN(n)) return n;
+  }
+  const n = Number(firestoreDocId);
+  return Number.isNaN(n) ? Number.NaN : n;
+}
+
 function docToPost(id: string, data: DocumentData): Post {
   const thumbKey = postThumbField();
   const galleryKey = postGalleryField();
   const thumb = data[thumbKey];
   const gallery = data[galleryKey];
   return {
-    id: Number(id),
+    id: postLogicalId(id, data),
     title: String(data.title ?? ""),
     content: String(data.content ?? ""),
     date: coerceDate(data.date),
@@ -183,9 +198,16 @@ export async function firestoreGetPosts(): Promise<Post[]> {
 }
 
 export async function firestoreGetPostById(id: number): Promise<Post | undefined> {
-  const snap = await db().collection(postsCollection()).doc(String(id)).get();
-  if (!snap.exists) return undefined;
-  return docToPost(snap.id, snap.data()!);
+  if (!Number.isFinite(id)) return undefined;
+  const coll = db().collection(postsCollection());
+  const direct = await coll.doc(String(id)).get();
+  if (direct.exists) return docToPost(direct.id, direct.data()!);
+
+  const all = await coll.get();
+  for (const d of all.docs) {
+    if (postLogicalId(d.id, d.data()) === id) return docToPost(d.id, d.data());
+  }
+  return undefined;
 }
 
 export async function firestoreGetProjects(): Promise<Project[]> {
