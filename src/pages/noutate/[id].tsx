@@ -41,8 +41,11 @@ export const getStaticProps: GetStaticProps<PageProps> = async (ctx) => {
 
   const { photos, thumbnail } = resolvePostGallery(post);
   const serial: PostProps = {
-    ...post,
+    id: post.id,
+    title: post.title,
+    content: post.content,
     date: post.date instanceof Date ? post.date.toISOString() : String(post.date),
+    link: post.link,
   };
   return { props: { post: serial, photos, thumbnail }, revalidate: LIST_REVALIDATE };
 };
