@@ -14,7 +14,7 @@ type PostRow = {
   content: string;
   date: string;
   link: string;
-  thumbnailUrl?: string;
+  thumbnailUrl: string | null;
 };
 
 type Props = { posts: PostRow[] };

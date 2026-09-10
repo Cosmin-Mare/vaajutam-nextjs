@@ -4,9 +4,9 @@ export type Post = {
   content: string;
   date: Date;
   link: string;
-  /** Firebase Storage download URL (optional fallback to local asset in UI). */
-  thumbnailUrl?: string;
-  galleryUrls?: string[];
+  /** Firebase Storage download URL; `null` when missing (JSON-safe for SSG). */
+  thumbnailUrl: string | null;
+  galleryUrls: string[];
 };
 
 export type Member = {
@@ -24,8 +24,8 @@ export type Project = {
   title: string;
   content: string;
   type: "a" | "r" | (string & {});
-  thumbnailUrl?: string;
-  galleryUrls?: string[];
+  thumbnailUrl: string | null;
+  galleryUrls: string[];
 };
 
 /** Row from `sponsor_partners` (or env collection); shown on /parteneri. */
@@ -33,7 +33,7 @@ export type SponsorPartner = {
   id: number;
   name: string;
   /** Firebase Storage download URL (`logoStorageUrl` in Firestore). */
-  logoUrl?: string;
+  logoUrl: string | null;
   websiteUrl: string | null;
   role: "sponsor" | "partner";
   /** Sort order when field `order` / `sortOrder` exists; lower first. */

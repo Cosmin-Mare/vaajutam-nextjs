@@ -98,10 +98,10 @@ function docToPost(id: string, data: DocumentData): Post {
     content: String(data.content ?? ""),
     date: coerceDate(data.date),
     link: socialUrlFromDoc(data),
-    thumbnailUrl: typeof thumb === "string" ? thumb : undefined,
+    thumbnailUrl: typeof thumb === "string" && thumb.trim() !== "" ? thumb : null,
     galleryUrls: Array.isArray(gallery)
       ? gallery.filter((u): u is string => typeof u === "string")
-      : undefined,
+      : [],
   };
 }
 
@@ -115,10 +115,10 @@ function docToProject(id: string, data: DocumentData): Project {
     title: String(data.title ?? ""),
     content: String(data.content ?? ""),
     type: (data.type as string) ?? "p",
-    thumbnailUrl: typeof thumb === "string" ? thumb : undefined,
+    thumbnailUrl: typeof thumb === "string" && thumb.trim() !== "" ? thumb : null,
     galleryUrls: Array.isArray(gallery)
       ? gallery.filter((u): u is string => typeof u === "string")
-      : undefined,
+      : [],
   };
 }
 
@@ -167,7 +167,7 @@ function docToSponsorPartner(id: string, data: DocumentData): SponsorPartner {
   return {
     id: Number(id),
     name,
-    logoUrl: typeof logoRaw === "string" && logoRaw.trim() !== "" ? logoRaw.trim() : undefined,
+    logoUrl: typeof logoRaw === "string" && logoRaw.trim() !== "" ? logoRaw.trim() : null,
     websiteUrl: websiteUrlFromDoc(data),
     role: sponsorRoleFromDoc(data),
     sortKey,
