@@ -1,6 +1,7 @@
 import type { AppProps } from "next/app";
 import Head from "next/head";
 import Script from "next/script";
+import { useRouter } from "next/router";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { RouteProgress } from "@/components/site/RouteProgress";
@@ -11,6 +12,8 @@ import "@/styles/skeletons.css";
 import "@/styles/site.css";
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+  const capturePage = router.pathname === "/230/ci";
   const siteStructuredData = {
     "@context": "https://schema.org",
     "@graph": [organizationJsonLd(), websiteJsonLd()],
@@ -48,7 +51,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Header />
       <RouteProgress />
       <Component {...pageProps} />
-      <Footer />
+      {capturePage ? null : <Footer />}
     </>
   );
 }

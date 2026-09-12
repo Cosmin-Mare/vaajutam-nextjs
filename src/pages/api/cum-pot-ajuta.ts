@@ -1,8 +1,11 @@
 import formidable from "formidable";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { validCNP } from "@/lib/cnp";
+import { normalizeCnp, validCNP } from "@/lib/cnp";
 import { isFirebaseConfigured } from "@/lib/firebase-admin";
-import { firestoreInsertNewsletterEmail } from "@/lib/firestore";
+import {
+  firestoreInsertForm230,
+  form230CnpExistsForTaxYear,
+} from "@/lib/firestore-form230";
 import { generateDonationPdf } from "@/lib/pdf-donation";
 import {
   driveEnvPresence,
@@ -38,61 +41,77 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ ok: false, error: "parse" });
   }
 
-  const nume = field(fields, "nume");
-  const prenume = field(fields, "prenume");
-  const email = field(fields, "email");
-  const telefon = field(fields, "telefon");
-  const initiala = field(fields, "initiala");
-  const cnp = field(fields, "cnp");
-  const judet = field(fields, "judet");
-  const localitate = field(fields, "localitate");
-  const strada = field(fields, "strada");
-  const numar = field(fields, "numar");
-  const an = field(fields, "an");
-  const dateConsent = field(fields, "date") === "on" ? "on" : "";
+  const nume = field(fields, "nume").trim();
+  const prenume = field(fields, "prenume").trim();
+  const cnp = normalizeCnp(field(fields, "cnp"));
+  const judet = field(fields, "judet").trim();
+  const localitate = field(fields, "localitate").trim();
+  const anRaw = field(fields, "an");
+  const an = anRaw === "2" ? "2" : anRaw === "1" ? "1" : "";
   const semnatura = field(fields, "signature");
-  const emailAccept = field(fields, "emailAccept");
+  const gdpr = field(fields, "gdpr");
+  const source = field(fields, "source") === "230" ? "230" : "web";
 
+  if (gdpr !== "on") {
+    return res.status(400).json({ ok: false, error: "gdpr" });
+  }
+  if (!nume || !prenume || !localitate || !judet) {
+    return res.status(400).json({ ok: false, error: "fields" });
+  }
+  if (an !== "1" && an !== "2") {
+    return res.status(400).json({ ok: false, error: "an" });
+  }
   if (!validCNP(cnp)) {
     return res.status(400).json({ ok: false, error: "cnp" });
   }
-  if (semnatura === "" || semnatura === "undefined") {
+  if (semnatura === "" || semnatura === "undefined" || !semnatura.startsWith("data:image/")) {
     return res.status(400).json({ ok: false, error: "semnatura" });
   }
 
-  if (emailAccept === "on" && email) {
+  if (isFirebaseConfigured()) {
     try {
-      if (isFirebaseConfigured()) {
-        await firestoreInsertNewsletterEmail(email);
+      const exists = await form230CnpExistsForTaxYear(cnp);
+      if (exists) {
+        return res.status(409).json({ ok: false, error: "duplicate" });
       }
     } catch (e) {
-      console.error("email insert", e);
+      console.error("[cum-pot-ajuta] duplicate check", e);
+      return res.status(500).json({ ok: false, error: "duplicate_check" });
     }
   }
 
   const fieldBody = {
     nume,
     prenume,
-    email,
-    telefon,
-    initiala,
+    email: "",
+    telefon: "",
+    initiala: "",
     cnp,
     judet,
     localitate,
-    strada,
-    numar,
+    strada: "",
+    numar: "",
     an,
-    date: dateConsent,
+    date: "",
   };
 
-  const pdfBuffer = await generateDonationPdf(semnatura, fieldBody);
+  let pdfBuffer: Uint8Array;
+  try {
+    pdfBuffer = await generateDonationPdf(semnatura, fieldBody);
+  } catch (e) {
+    console.error("[cum-pot-ajuta] pdf", e);
+    return res.status(400).json({ ok: false, error: "semnatura" });
+  }
+  const pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
   const fileBase = `${nume}_${prenume}`.replace(/[^\w\-.]+/g, "_");
   const fileName = fileBase + ".pdf";
 
+  let driveFileId: string | undefined;
   if (isDriveUploadConfigured()) {
     try {
       const driveResult = await uploadPdfToDrive(pdfBuffer, fileName);
       if (driveResult.ok) {
+        driveFileId = driveResult.fileId;
         console.info("[cum-pot-ajuta] Drive backup ok", {
           fileId: driveResult.fileId,
           fileName: driveResult.fileName,
@@ -120,8 +139,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  if (isFirebaseConfigured()) {
+    try {
+      await firestoreInsertForm230({
+        nume,
+        prenume,
+        initiala: "",
+        cnp,
+        email: "",
+        telefon: "",
+        localitate,
+        judet,
+        strada: "",
+        numar: "",
+        durationYears: an,
+        consentGdpr: true,
+        consentAnafShare: false,
+        consentNewsletter: false,
+        signaturePng: semnatura,
+        pdfBase64,
+        driveFileId,
+        source,
+      });
+    } catch (e) {
+      console.error("[cum-pot-ajuta] firestore insert", e);
+      return res.status(500).json({ ok: false, error: "save" });
+    }
+  }
+
   return res.status(200).json({
     ok: true,
-    pdfBase64: Buffer.from(pdfBuffer).toString("base64"),
+    pdfBase64,
   });
 }

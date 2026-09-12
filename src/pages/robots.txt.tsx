@@ -5,6 +5,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   const base = getSiteUrl();
   const body = `User-agent: *
 Allow: /
+Disallow: /230/ci
 
 Sitemap: ${base}/sitemap.xml
 `;

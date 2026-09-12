@@ -64,7 +64,7 @@ export function bufferToBinary(v: unknown): boolean {
   return parseInt(v.toString("hex"), 16).toString(2) === "1";
 }
 
-function stripDiacritics(input: string): string {
+export function stripDiacritics(input: string): string {
   return input
     .replaceAll("ă", "a")
     .replaceAll("î", "i")
@@ -76,6 +76,27 @@ function stripDiacritics(input: string): string {
     .replaceAll("Â", "A")
     .replaceAll("Ș", "S")
     .replaceAll("Ț", "T");
+}
+
+export function normalizeCnp(raw: string): string {
+  return raw.replace(/\D/g, "").slice(0, 13);
+}
+
+/** Last 4 digits only — birth date (positions 2–7) stays hidden in lists. */
+export function maskCnp(cnp: string): string {
+  const n = normalizeCnp(cnp);
+  if (!n) return "••••";
+  if (n.length <= 4) return "•".repeat(n.length);
+  return `${"•".repeat(n.length - 4)}${n.slice(-4)}`;
+}
+
+export type CnpFieldStatus = "empty" | "incomplete" | "invalid" | "valid";
+
+export function cnpFieldStatus(raw: string): CnpFieldStatus {
+  const n = normalizeCnp(raw);
+  if (!n) return "empty";
+  if (n.length < 13) return "incomplete";
+  return validCNP(n) ? "valid" : "invalid";
 }
 
 const textAndCoordinates: Record<string, [number, number]> = {
@@ -111,7 +132,7 @@ export function buildForm230FieldData(body: {
   for (let i = 0; i < body.cnp.length; i++) {
     cnpSpaced += body.cnp[i] + "    ";
   }
-  // Legacy: req.body.an === "on" (first radio, one year) marked doiAni field in the PDF
+  // Official form: only the 2-year option is a checkbox (X). 1 year leaves it blank.
   return {
     nume: stripDiacritics(body.nume),
     prenume: stripDiacritics(body.prenume),
@@ -123,7 +144,7 @@ export function buildForm230FieldData(body: {
     telefon: body.telefon,
     judet: stripDiacritics(body.judet),
     localitate: stripDiacritics(body.localitate),
-    doiAni: body.an === "on" ? "X" : "",
+    doiAni: body.an === "2" ? "X" : "",
     date: body.date === "on" ? "X" : "",
   };
 }
