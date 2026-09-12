@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Lock tracing to this app when a parent directory also has a lockfile (avoids mixed roots in CI/Azure).
   outputFileTracingRoot: path.join(nextConfigDir),
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      canvas: false,
+    };
+    return config;
+  },
   async redirects() {
     return [
       { source: "/sustinatori", destination: "/parteneri", permanent: true },

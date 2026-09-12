@@ -19,6 +19,8 @@ const STATIC_PATHS = [
   "/parteneri",
   "/contact",
   "/cum-pot-ajuta",
+  "/230",
+  "/230/confidentialitate",
   "/motive",
 ];
 
