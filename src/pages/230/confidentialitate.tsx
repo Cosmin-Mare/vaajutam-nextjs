@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SeoHead } from "@/components/site/SeoHead";
 import { FORM230_ORG, form230TaxYear } from "@/lib/form230-config";
 import { SITE_NAME } from "@/lib/seo";
@@ -97,7 +98,7 @@ export default function Form230PrivacyPage() {
         </p>
 
         <p>
-          <a href="/230">Înapoi la Formularul 230</a>
+          <Link href="/230">Înapoi la Formularul 230</Link>
         </p>
       </article>
     </>

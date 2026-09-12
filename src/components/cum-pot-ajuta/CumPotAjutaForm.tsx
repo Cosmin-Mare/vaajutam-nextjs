@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { CiIdScanner } from "@/components/cum-pot-ajuta/CiIdScanner";
 import { CiPhoneQr } from "@/components/cum-pot-ajuta/CiPhoneQr";
 import {
@@ -284,7 +285,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               <p className="gdpr-short">
                 Folosim datele doar pentru Formularul 230 către ANAF, în favoarea Asociației Vă
                 Ajutăm din Dej. Poza CI nu părăsește dispozitivul tău.{" "}
-                <a href="/230/confidentialitate">Informare privind datele personale</a>
+                <Link href="/230/confidentialitate">Informare privind datele personale</Link>
               </p>
               <label className={"gdpr-consent" + (gdprInvalid ? " gdpr-consent-invalid" : "")}>
                 <input type="checkbox" id="gdpr" name="gdpr" required />

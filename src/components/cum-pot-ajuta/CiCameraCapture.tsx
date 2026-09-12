@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { ciOcrHasAnyField, recognizeCiImage } from "@/lib/ci-recognize";
 import { saveCiOcrLocal } from "@/lib/ci-ocr-local";
@@ -155,7 +156,7 @@ export function CiCameraCapture() {
       ) : null}
 
       <p className="ci-capture-back">
-        <a href="/230">Înapoi la Formularul 230</a>
+        <Link href="/230">Înapoi la Formularul 230</Link>
       </p>
     </div>
   );
