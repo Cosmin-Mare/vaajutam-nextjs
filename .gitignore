@@ -47,3 +47,6 @@ serviceAccountKey.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tesseract language data downloaded at runtime
+*.traineddata

@@ -1,18 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  canUseLiveCamera,
+  CiCameraGuide,
+  CiLiveCamera,
+  requestCiCamera,
+} from "@/components/cum-pot-ajuta/CiLiveCamera";
 import { CiPhoneQr } from "@/components/cum-pot-ajuta/CiPhoneQr";
-import { ciOcrHasAnyField, recognizeCiImage } from "@/lib/ci-recognize";
+import {
+  ciOcrComplete,
+  ciOcrHasAnyField,
+  ciOcrMissing,
+  ciOcrWarning,
+  isCiPhotoFile,
+  prepareCiPhoto,
+  recognizeCiImage,
+} from "@/lib/ci-recognize";
 import type { CiOcrResult } from "@/lib/ci-id-ocr";
 
-type Stage = "idle" | "reading" | "done" | "error";
+type Stage = "idle" | "reading" | "done" | "partial" | "error";
 
 type Props = {
   sessionId?: string;
   onExtracted: (data: CiOcrResult) => void;
   hidePhoneQr?: boolean;
   showSteps?: boolean;
-  autoOpenCamera?: boolean;
   kicker?: string;
   title?: string;
   afterRecognize?: (data: CiOcrResult) => Promise<boolean | void>;
@@ -57,16 +70,19 @@ export function CiUploadCard({
   const cameraRef = useRef<HTMLInputElement | null>(null);
   const galleryRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<string | null>(null);
+  const camFailed = useRef(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [phoneOpen, setPhoneOpen] = useState(false);
-  const [qrWaiting, setQrWaiting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bits, setBits] = useState<string[]>([]);
+  const [missing, setMissing] = useState<string[]>([]);
   const [fromPhone, setFromPhone] = useState(false);
   const [paired, setPaired] = useState(false);
   const [hint, setHint] = useState(READ_HINTS[0]);
+  const [camStream, setCamStream] = useState<MediaStream | null>(null);
+  const [camPending, setCamPending] = useState(false);
+  const [camGuide, setCamGuide] = useState(false);
   const showQr = Boolean(sessionId) && !hidePhoneQr;
 
   const clearPreview = () => {
@@ -95,60 +111,64 @@ export function CiUploadCard({
     return () => window.clearInterval(t);
   }, [stage]);
 
-  useEffect(() => {
-    if (!phoneOpen) {
-      setQrWaiting(false);
-      return;
-    }
-    const t = window.setTimeout(() => setQrWaiting(true), 2200);
-    return () => window.clearTimeout(t);
-  }, [phoneOpen]);
-
-  const finishOk = useCallback(
+  const applyParsed = useCallback(
     async (parsed: CiOcrResult, viaPhone: boolean) => {
+      if (!ciOcrHasAnyField(parsed)) {
+        setBits([]);
+        setMissing(ciOcrMissing(parsed));
+        setStage("error");
+        setError(ciOcrWarning(parsed));
+        return;
+      }
       let sent = false;
       if (afterRecognize) sent = Boolean(await afterRecognize(parsed));
       onExtracted(parsed);
       setBits(foundBits(parsed));
+      setMissing(ciOcrMissing(parsed));
       setFromPhone(viaPhone);
       setPaired(sent);
-      setStage("done");
-      setError(null);
-      setPhoneOpen(false);
+      if (ciOcrComplete(parsed)) {
+        setStage("done");
+        setError(null);
+        return;
+      }
+      setStage("partial");
+      setError(ciOcrWarning(parsed));
     },
     [afterRecognize, onExtracted]
   );
 
   const readFile = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setError("Alege o fotografie (JPG sau PNG).");
+    if (!isCiPhotoFile(file)) {
+      setError("Alege o fotografie (JPG, PNG sau HEIC).");
       setStage("error");
       return;
     }
     clearPreview();
-    const url = URL.createObjectURL(file);
+    let photo = file;
+    try {
+      photo = await prepareCiPhoto(file);
+    } catch {
+      setError("Nu am putut deschide poza HEIC. Încearcă JPG sau fotografiază din nou.");
+      setStage("error");
+      return;
+    }
+    const url = URL.createObjectURL(photo);
     previewRef.current = url;
     setPreview(url);
     setStage("reading");
     setError(null);
-    setPhoneOpen(false);
     const wait = new Promise((r) => window.setTimeout(r, 900));
     try {
-      const parsed = await recognizeCiImage(file);
+      const parsed = await recognizeCiImage(photo);
       await wait;
-      if (!ciOcrHasAnyField(parsed)) {
-        setStage("error");
-        setError(
-          "Nu am citit numele sau CNP-ul. Mai aproape, pe lumină, cu cele două rânduri de jos vizibile."
-        );
-        return;
-      }
-      await finishOk(parsed, false);
+      await applyParsed(parsed, false);
     } catch (err) {
       console.error("[ci-upload]", err);
       await wait;
       setStage("error");
-      setError("Nu am putut citi poza. Încearcă din nou sau completează manual mai jos.");
+      setMissing(["Nume", "Prenume", "CNP"]);
+      setError("Nu am putut citi poza. Fotografiază din nou, cu buletinul în cadru.");
     }
   };
 
@@ -157,13 +177,32 @@ export function CiUploadCard({
     setStage("idle");
     setError(null);
     setBits([]);
+    setMissing([]);
     setFromPhone(false);
     setPaired(false);
   };
 
-  const openPrimary = () => {
-    if (showQr) galleryRef.current?.click();
-    else cameraRef.current?.click();
+  const openNativeCamera = () => {
+    cameraRef.current?.click();
+  };
+
+  const retryCamera = () => {
+    setError(null);
+    if (!canUseLiveCamera() || camFailed.current) {
+      setCamGuide(true);
+      return;
+    }
+    setCamPending(true);
+    void requestCiCamera()
+      .then((stream) => {
+        setCamPending(false);
+        setCamStream(stream);
+      })
+      .catch(() => {
+        setCamPending(false);
+        camFailed.current = true;
+        setCamGuide(true);
+      });
   };
 
   const dropzone = stage === "idle" || stage === "error";
@@ -175,15 +214,17 @@ export function CiUploadCard({
         "ci-card" +
         (stage === "reading" ? " ci-card-busy" : "") +
         (stage === "done" ? " ci-card-ok" : "") +
-        (stage === "error" ? " ci-card-err" : "")
+        (stage === "partial" || stage === "error" ? " ci-card-err" : "")
       }
       aria-busy={stage === "reading"}
     >
       {showSteps ? (
         <ol className="ci-steps" aria-label="Pașii fotografiei">
           <li className={stepIdle ? "is-now" : "is-done"}>Pregătește</li>
-          <li className={stage === "reading" ? "is-now" : stage === "done" ? "is-done" : ""}>Citește</li>
-          <li className={stage === "done" ? "is-now is-done" : ""}>Gata</li>
+          <li className={stage === "reading" ? "is-now" : stage === "done" || stage === "partial" ? "is-done" : ""}>
+            Citește
+          </li>
+          <li className={stage === "done" ? "is-now is-done" : stage === "partial" ? "is-now" : ""}>Gata</li>
         </ol>
       ) : null}
 
@@ -198,20 +239,21 @@ export function CiUploadCard({
       <input
         ref={cameraRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif,image/heic,image/heif"
         capture="environment"
         className="visually-hidden"
         aria-label="Fotografiază CI-ul"
         onChange={(e) => {
           const file = e.currentTarget.files?.[0];
           e.currentTarget.value = "";
+          setCamGuide(false);
           if (file) void readFile(file);
         }}
       />
       <input
         ref={galleryRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif,image/heic,image/heif"
         className="visually-hidden"
         aria-label="Alege o poză cu CI-ul"
         onChange={(e) => {
@@ -222,77 +264,85 @@ export function CiUploadCard({
       />
 
       {dropzone ? (
-        <div
-          className={
-            "ci-drop" + (dragOver ? " ci-drop-hot" : "") + (stage === "error" ? " ci-drop-err" : "")
-          }
-          onDragEnter={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={(e) => {
-            if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-            setDragOver(false);
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOver(false);
-            const file = e.dataTransfer.files?.[0];
-            if (file) void readFile(file);
-          }}
-        >
-          {preview ? (
-            <button type="button" className="ci-preview ci-preview-static" onClick={openPrimary}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Poza aleasă — apasă ca să schimbi" />
-            </button>
-          ) : (
-            <button type="button" className="ci-drop-art" onClick={openPrimary}>
-              <span className="ci-id-float">
-                <CiIdArt />
-              </span>
-              <span className="ci-drop-hint">
-                {dragOver
-                  ? "Lasă poza aici"
-                  : showQr
-                    ? "Trage poza buletinului aici"
-                    : "Ține buletinul drept, pe lumină"}
-              </span>
-            </button>
-          )}
-          <div className="ci-drop-actions">
-            {showQr ? (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-primary-pink-round ci-drop-primary"
-                  onClick={() => galleryRef.current?.click()}
-                >
-                  Alege o poză
-                </button>
-                <button type="button" className="btn btn-secondary-pink" onClick={() => cameraRef.current?.click()}>
-                  Fotografiază
-                </button>
-              </>
+        <div className={"ci-card-split" + (showQr ? " ci-card-split-qr" : "")}>
+          <div
+            className={
+              "ci-drop" + (dragOver ? " ci-drop-hot" : "") + (stage === "error" ? " ci-drop-err" : "")
+            }
+            onDragEnter={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={(e) => {
+              if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+              setDragOver(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const file = e.dataTransfer.files?.[0];
+              if (file) void readFile(file);
+            }}
+          >
+            {preview ? (
+              <button type="button" className="ci-preview ci-preview-static" onClick={retryCamera}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={preview} alt="Poza aleasă — apasă ca să schimbi" />
+              </button>
             ) : (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-primary-pink-round ci-drop-primary"
-                  onClick={() => cameraRef.current?.click()}
-                >
-                  Fotografiază
-                </button>
-                <button type="button" className="btn btn-secondary-pink" onClick={() => galleryRef.current?.click()}>
-                  Alege din galerie
-                </button>
-              </>
+              <button type="button" className="ci-drop-art" onClick={retryCamera}>
+                <span className="ci-id-float">
+                  <CiIdArt />
+                </span>
+                <span className="ci-drop-hint">
+                  {dragOver ? "Lasă poza aici" : "Așază buletinul în cadru, pe lumină"}
+                </span>
+                <ul className="ci-guide">
+                  <li>Tot cardul, drept, în dreptunghi</li>
+                  <li>Fără reflexii pe nume sau CNP</li>
+                  <li>Cele două rânduri de jos vizibile</li>
+                </ul>
+              </button>
             )}
+            <div className="ci-drop-actions">
+              {showQr ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary-pink-round ci-drop-primary"
+                    onClick={() => galleryRef.current?.click()}
+                  >
+                    Alege o poză
+                  </button>
+                  <button type="button" className="btn btn-secondary-pink" onClick={retryCamera}>
+                    Fotografiază
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary-pink-round ci-drop-primary"
+                    onClick={retryCamera}
+                  >
+                    Fotografiază
+                  </button>
+                  <button type="button" className="btn btn-secondary-pink" onClick={() => galleryRef.current?.click()}>
+                    Alege din galerie
+                  </button>
+                </>
+              )}
+            </div>
           </div>
+          {showQr ? (
+            <div className="ci-phone-panel ci-phone-panel-open">
+              <CiPhoneQr sessionId={sessionId} onExtracted={(data) => void applyParsed(data, true)} />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -307,42 +357,39 @@ export function CiUploadCard({
         </div>
       ) : null}
 
-      {stage === "done" ? (
-        <div className="ci-success" aria-live="polite">
+      {stage === "done" || stage === "partial" ? (
+        <div className={"ci-success" + (stage === "partial" ? " ci-success-warn" : "")} aria-live="polite">
           {preview ? (
             <div className="ci-preview ci-preview-thumb">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="" />
-              <span className="ci-success-mark" aria-hidden>
-                <svg viewBox="0 0 24 24" width="18" height="18">
-                  <path
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 12.5 10 17.5 19 7"
-                  />
-                </svg>
-              </span>
+              {stage === "done" ? (
+                <span className="ci-success-mark" aria-hidden>
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 12.5 10 17.5 19 7"
+                    />
+                  </svg>
+                </span>
+              ) : (
+                <span className="ci-success-mark ci-success-mark-warn" aria-hidden>
+                  !
+                </span>
+              )}
             </div>
-          ) : (
-            <span className="ci-success-mark ci-success-mark-solo" aria-hidden>
-              <svg viewBox="0 0 24 24" width="22" height="22">
-                <path
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 12.5 10 17.5 19 7"
-                />
-              </svg>
-            </span>
-          )}
+          ) : null}
           <div className="ci-success-copy">
             <p className="ci-success-title">
-              {fromPhone ? "Am preluat datele de pe telefon" : "Gata — am completat câmpurile"}
+              {stage === "partial"
+                ? "Nu am citit tot — încearcă din nou"
+                : fromPhone
+                  ? "Am preluat datele de pe telefon"
+                  : "Gata — am completat câmpurile"}
             </p>
             {bits.length ? (
               <ul className="ci-chips">
@@ -351,43 +398,68 @@ export function CiUploadCard({
                     {b}
                   </li>
                 ))}
+                {missing.map((b) => (
+                  <li key={b} className="ci-chip ci-chip-miss">
+                    Lipsește {b}
+                  </li>
+                ))}
               </ul>
             ) : null}
-            <p className="ci-card-help">
-              {hidePhoneQr
-                ? "Poți continua pe telefon sau pe calculator."
-                : "Verifică-le mai jos, apoi semnează."}
-            </p>
+            {stage === "partial" ? (
+              <div className="ci-warn" role="alert">
+                <p>{error}</p>
+                <button type="button" className="btn btn-primary-pink-round" onClick={retryCamera}>
+                  Fotografiază din nou
+                </button>
+              </div>
+            ) : (
+              <p className="ci-card-help">
+                {hidePhoneQr ? "Poți continua pe telefon sau pe calculator." : "Verifică-le mai jos, apoi semnează."}
+              </p>
+            )}
             {doneExtra ? doneExtra({ paired }) : null}
             <button type="button" className="ci-text-btn" onClick={reset}>
-              Folosește altă poză
+              {stage === "partial" ? "Completez manual" : "Folosește altă poză"}
             </button>
           </div>
         </div>
       ) : null}
 
-      {error ? <p className="ci-scan-err">{error}</p> : null}
-
-      {showQr && stage !== "reading" && stage !== "done" ? (
-        <div className={"ci-phone-panel" + (phoneOpen ? " ci-phone-panel-open" : "")}>
-          <button
-            type="button"
-            className="ci-text-btn ci-phone-toggle"
-            aria-expanded={phoneOpen}
-            onClick={() => setPhoneOpen((o) => !o)}
-          >
-            {phoneOpen ? "Ascunde codul QR" : "Sau fotografiază de pe telefon"}
-          </button>
-          {phoneOpen ? (
-            <div className="ci-phone-panel-body">
-              <CiPhoneQr
-                sessionId={sessionId}
-                waiting={qrWaiting}
-                onExtracted={(data) => void finishOk(data, true)}
-              />
-            </div>
+      {stage === "error" && error ? (
+        <div className="ci-warn ci-warn-block" role="alert">
+          <p className="ci-scan-err">{error}</p>
+          {missing.length ? (
+            <ul className="ci-chips">
+              {missing.map((b) => (
+                <li key={b} className="ci-chip ci-chip-miss">
+                  Lipsește {b}
+                </li>
+              ))}
+            </ul>
           ) : null}
+          <button type="button" className="btn btn-primary-pink-round" onClick={retryCamera}>
+            Fotografiază din nou
+          </button>
         </div>
+      ) : null}
+
+      {camPending ? (
+        <div className="ci-cam ci-cam-pending" role="status">
+          <p className="ci-cam-title">Deschid camera…</p>
+        </div>
+      ) : null}
+
+      {camGuide ? <CiCameraGuide onShoot={openNativeCamera} onClose={() => setCamGuide(false)} /> : null}
+
+      {camStream ? (
+        <CiLiveCamera
+          stream={camStream}
+          onCapture={(file) => {
+            setCamStream(null);
+            void readFile(file);
+          }}
+          onClose={() => setCamStream(null)}
+        />
       ) : null}
     </div>
   );

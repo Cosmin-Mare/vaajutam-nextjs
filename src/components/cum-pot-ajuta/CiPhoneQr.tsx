@@ -6,24 +6,39 @@ import { isCiSessionId } from "@/lib/ci-session-id";
 
 type Props = {
   sessionId: string;
-  waiting?: boolean;
   onExtracted: (data: CiOcrResult) => void;
 };
 
-export function CiPhoneQr({ sessionId, waiting, onExtracted }: Props) {
+async function qrOrigin(): Promise<string> {
+  const here = window.location.origin;
+  const host = window.location.hostname;
+  if (host !== "localhost" && host !== "127.0.0.1") return here;
+  try {
+    const res = await fetch("/api/form230/lan-origin");
+    const j = (await res.json()) as { origin?: string | null };
+    if (j.origin) return j.origin;
+  } catch {
+    /* stay on localhost */
+  }
+  return here;
+}
+
+export function CiPhoneQr({ sessionId, onExtracted }: Props) {
   const [svg, setSvg] = useState<string | null>(null);
   const [href, setHref] = useState("");
   const [received, setReceived] = useState(false);
+  const lastPayload = useRef("");
   const onExtractedRef = useRef(onExtracted);
   onExtractedRef.current = onExtracted;
 
   useEffect(() => {
     if (!isCiSessionId(sessionId)) return;
-    const origin = window.location.origin;
-    const url = `${origin}/230/ci?s=${encodeURIComponent(sessionId)}`;
-    setHref(url);
     let cancelled = false;
-    void import("qrcode").then(async (QRCode) => {
+    void qrOrigin().then(async (origin) => {
+      const url = `${origin}/230/ci?s=${encodeURIComponent(sessionId)}`;
+      if (cancelled) return;
+      setHref(url);
+      const QRCode = await import("qrcode");
       const markup = await QRCode.toString(url, {
         type: "svg",
         margin: 1,
@@ -46,12 +61,16 @@ export function CiPhoneQr({ sessionId, waiting, onExtracted }: Props) {
         const j = (await res.json()) as CiOcrResult & { ready?: boolean; pairing?: boolean };
         if (stopped) return;
         if (j.ready && (j.nume || j.prenume || j.cnp)) {
-          setReceived(true);
-          onExtractedRef.current({
-            ...(j.nume ? { nume: j.nume } : {}),
-            ...(j.prenume ? { prenume: j.prenume } : {}),
-            ...(j.cnp ? { cnp: j.cnp } : {}),
-          });
+          const payload = JSON.stringify({ nume: j.nume ?? "", prenume: j.prenume ?? "", cnp: j.cnp ?? "" });
+          if (payload !== lastPayload.current) {
+            lastPayload.current = payload;
+            onExtractedRef.current({
+              ...(j.nume ? { nume: j.nume } : {}),
+              ...(j.prenume ? { prenume: j.prenume } : {}),
+              ...(j.cnp ? { cnp: j.cnp } : {}),
+            });
+          }
+          if (j.nume && j.prenume && j.cnp) setReceived(true);
         }
       } catch {
         /* next tick */
@@ -69,6 +88,7 @@ export function CiPhoneQr({ sessionId, waiting, onExtracted }: Props) {
 
   return (
     <aside className="ci-phone-qr" aria-label="Cod QR pentru fotografia CI pe telefon">
+      <p className="ci-phone-qr-kicker">De pe telefon</p>
       <div className="ci-qr-ring ci-qr-ring-wait">
         {svg ? (
           <div
@@ -81,13 +101,13 @@ export function CiPhoneQr({ sessionId, waiting, onExtracted }: Props) {
           <div className="ci-phone-qr-placeholder" aria-hidden="true" />
         )}
       </div>
-      <p className="ci-phone-qr-caption">Scanează cu telefonul, apoi fotografiază buletinul</p>
+      <p className="ci-phone-qr-caption">Scanează, apoi fotografiază buletinul</p>
+      <p className="ci-phone-wait">Aștept fotografia…</p>
       {href ? (
         <p className="ci-phone-qr-link">
-          <a href={href}>Deschide pe acest dispozitiv</a>
+          <a href={href}>Deschide pe telefon</a>
         </p>
       ) : null}
-      {waiting ? <p className="ci-phone-wait">Aștept fotografia…</p> : null}
     </aside>
   );
 }

@@ -58,7 +58,6 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!window.matchMedia("(min-width: 768px)").matches) return;
     try {
       const id = newCiSessionId();
       setCiSessionId(id);
