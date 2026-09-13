@@ -5,13 +5,13 @@ import type { CiKind } from "@/lib/ci-id-ocr";
 
 type LiveProps = {
   stream: MediaStream;
-  kind: CiKind;
+  kind?: CiKind;
   onCapture: (file: File) => void;
   onClose: () => void;
 };
 
 type GuideProps = {
-  kind: CiKind;
+  kind?: CiKind;
   onShoot: () => void;
   onClose: () => void;
 };
@@ -76,7 +76,7 @@ async function bumpTrackResolution(stream: MediaStream): Promise<void> {
   }
 }
 
-function FrameGhost({ kind }: { kind: CiKind }) {
+function FrameGhost({ kind }: { kind?: CiKind }) {
   if (kind === "old") {
     return (
       <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
@@ -90,14 +90,25 @@ function FrameGhost({ kind }: { kind: CiKind }) {
       </svg>
     );
   }
+  if (kind === "new") {
+    return (
+      <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
+        <rect x="8" y="18" width="52" height="100" rx="6" />
+        <circle cx="34" cy="48" r="12" />
+        <rect x="72" y="20" width="132" height="8" rx="4" />
+        <rect x="72" y="36" width="118" height="8" rx="4" />
+        <rect x="72" y="52" width="72" height="6" rx="3" />
+        <rect className="ci-cam-ghost-cnp" x="72" y="78" width="96" height="8" rx="4" />
+      </svg>
+    );
+  }
   return (
     <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
-      <rect x="8" y="18" width="52" height="100" rx="6" />
+      <rect x="8" y="18" width="52" height="88" rx="6" />
       <circle cx="34" cy="48" r="12" />
-      <rect x="72" y="20" width="132" height="8" rx="4" />
-      <rect x="72" y="36" width="118" height="8" rx="4" />
-      <rect x="72" y="52" width="72" height="6" rx="3" />
-      <rect className="ci-cam-ghost-cnp" x="72" y="78" width="96" height="8" rx="4" />
+      <rect x="72" y="22" width="132" height="8" rx="4" />
+      <rect x="72" y="40" width="118" height="8" rx="4" />
+      <rect x="72" y="58" width="96" height="8" rx="4" />
     </svg>
   );
 }
@@ -193,7 +204,7 @@ function CameraShell({
   extraTips,
   children,
 }: {
-  kind: CiKind;
+  kind?: CiKind;
   onClose: () => void;
   onSnap: () => void;
   snapDisabled?: boolean;
@@ -218,7 +229,7 @@ function CameraShell({
       {children}
       <div className="ci-cam-stage">
         <p id="ci-cam-title" className="ci-cam-title">
-          {kind === "old" ? "Așază buletinul vechi în cadru" : "Așază CI-ul nou în cadru"}
+          {kind === "old" ? "Așază buletinul vechi în cadru" : kind === "new" ? "Așază CI-ul nou în cadru" : "Așază buletinul în cadru"}
         </p>
         <div className="ci-cam-frame">
           <span className="ci-cam-corner ci-cam-tl" aria-hidden />
@@ -231,12 +242,12 @@ function CameraShell({
               <span className="ci-cam-data-tag ci-cam-data-tag-names">Nume</span>
               <span className="ci-cam-data-tag ci-cam-data-tag-cnp">CNP</span>
             </>
-          ) : (
+          ) : kind === "old" ? (
             <>
               <span className="ci-cam-data-tag ci-cam-data-tag-old-cnp">CNP</span>
               <span className="ci-cam-mrz-tag">Rândurile de jos</span>
             </>
-          )}
+          ) : null}
         </div>
         <ul className="ci-cam-tips">
           {kind === "old" ? (
@@ -245,11 +256,16 @@ function CameraShell({
               <li>CNP-ul sus, numele sub el, cele două rânduri de jos</li>
               <li>Lumină din față, fără reflexii pe plastic</li>
             </>
-          ) : (
+          ) : kind === "new" ? (
             <>
               <li>Fața cu fotografia, tot cardul în dreptunghi</li>
               <li>Numele sus în dreapta, CNP-ul mai jos — nu e nevoie de spate</li>
               <li>Fără reflexii pe plastic</li>
+            </>
+          ) : (
+            <>
+              <li>Fața cu fotografia, tot cardul în dreptunghi</li>
+              <li>Lumină din față, fără reflexii pe plastic</li>
             </>
           )}
           {extraTips}

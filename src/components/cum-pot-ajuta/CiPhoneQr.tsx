@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CiKind, CiOcrResult } from "@/lib/ci-id-ocr";
+import type { CiOcrResult } from "@/lib/ci-id-ocr";
 import { isCiSessionId } from "@/lib/ci-session-id";
 
 type Props = {
   sessionId: string;
-  kind?: CiKind;
   onExtracted: (data: CiOcrResult) => void;
 };
 
@@ -24,7 +23,7 @@ async function qrOrigin(): Promise<string> {
   return here;
 }
 
-export function CiPhoneQr({ sessionId, kind, onExtracted }: Props) {
+export function CiPhoneQr({ sessionId, onExtracted }: Props) {
   const [svg, setSvg] = useState<string | null>(null);
   const [href, setHref] = useState("");
   const [received, setReceived] = useState(false);
@@ -36,9 +35,7 @@ export function CiPhoneQr({ sessionId, kind, onExtracted }: Props) {
     if (!isCiSessionId(sessionId)) return;
     let cancelled = false;
     void qrOrigin().then(async (origin) => {
-      const q = new URLSearchParams({ s: sessionId });
-      if (kind) q.set("t", kind);
-      const url = `${origin}/230/ci?${q.toString()}`;
+      const url = `${origin}/230/ci?s=${encodeURIComponent(sessionId)}`;
       if (cancelled) return;
       setHref(url);
       const QRCode = await import("qrcode");
@@ -53,7 +50,7 @@ export function CiPhoneQr({ sessionId, kind, onExtracted }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, kind]);
+  }, [sessionId]);
 
   useEffect(() => {
     if (!isCiSessionId(sessionId) || received) return;
@@ -104,7 +101,7 @@ export function CiPhoneQr({ sessionId, kind, onExtracted }: Props) {
           <div className="ci-phone-qr-placeholder" aria-hidden="true" />
         )}
       </div>
-      <p className="ci-phone-qr-caption">Scanează, apoi fotografiază buletinul</p>
+      <p className="ci-phone-qr-caption">Scanează, apoi alege tipul de CI pe telefon</p>
       <p className="ci-phone-wait">Aștept fotografia…</p>
       {href ? (
         <p className="ci-phone-qr-link">

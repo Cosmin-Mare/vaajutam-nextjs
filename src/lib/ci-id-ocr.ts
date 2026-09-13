@@ -358,6 +358,36 @@ function namesEqual(a?: string, b?: string): boolean {
   return key(a) === key(b);
 }
 
+function nameKey(name: string): string {
+  return stripDiacritics(name).replace(/[^A-Za-z]/g, "").toUpperCase();
+}
+
+/** Mare vs Mares: Tesseract often glues S/L/K/I onto a short surname. */
+function isOcrLengthening(short: string, long: string): boolean {
+  const a = nameKey(short);
+  const b = nameKey(long);
+  if (a.length < 3 || a.length > 4 || b.length !== a.length + 1) return false;
+  if (!b.startsWith(a)) return false;
+  return /^[SLKI]$/.test(b.slice(-1));
+}
+
+function stemAppearsInText(stem: string, text: string): boolean {
+  const compact = repairMrzChevrons(compactMrz(text));
+  if (new RegExp(`(?:ID|I<)ROU${stem}<<`).test(compact)) return true;
+  const u = stripDiacritics(text).toUpperCase();
+  return new RegExp(`(^|[^A-Z])${stem}([^A-Z]|$)`).test(u);
+}
+
+/** If MARES is the only candidate but MARE is on the card / MRZ, drop the extra letter. */
+function maybeTrimGluedLetter(name: string, text: string): string {
+  const key = nameKey(name);
+  if (key.length < 4 || key.length > 5 || !/[SLKI]$/.test(key)) return name;
+  const stem = key.slice(0, -1);
+  if (stem.length < 3 || stem.length > 4) return name;
+  if (!stemAppearsInText(stem, text)) return name;
+  return titleCaseRo(stem);
+}
+
 function looksLikeGivenName(name: string): boolean {
   return name.includes("-") || /\s/.test(name);
 }
@@ -448,7 +478,10 @@ function harvestNames(lines: string[], kind?: CiKind): { nume?: string; prenume?
     if (!name || looksLikeOcrJunk(name) || isLabelRemnant(name)) continue;
     cands.push({ name, index: i, score: nameScore(name) });
   }
-  return pickBestNames(cands);
+  const collapsed = cands.filter(
+    (c) => !cands.some((o) => o.name !== c.name && isOcrLengthening(o.name, c.name))
+  );
+  return pickBestNames(collapsed.length ? collapsed : cands);
 }
 
 export function ocrResultScore(result: CiOcrResult, text: string, kind?: CiKind): number {
@@ -466,10 +499,10 @@ export function ocrResultScore(result: CiOcrResult, text: string, kind?: CiKind)
 }
 
 function firstAcceptable(cands: (string | undefined)[]): string | undefined {
-  for (const c of cands) {
-    if (isAcceptableName(c)) return c;
-  }
-  return undefined;
+  const ok = cands.filter(isAcceptableName);
+  if (!ok.length) return undefined;
+  const stem = ok.find((n) => ok.some((o) => n !== o && isOcrLengthening(n, o)));
+  return stem ?? ok[0];
 }
 
 function finalizeNames(nume?: string, prenume?: string): { nume?: string; prenume?: string } {
@@ -518,7 +551,12 @@ export function parseRomanianIdText(text: string, kind?: CiKind): CiOcrResult {
   const trustMrz = kind !== "new" && mrzNamesTrustworthy(mrz);
 
   if (trustMrz) {
-    Object.assign(result, finalizeNames(mrz.nume, mrz.prenume));
+    const nume =
+      firstAcceptable([mrz.nume, labeledNume, harvested.nume]) ?? mrz.nume;
+    Object.assign(
+      result,
+      finalizeNames(nume ? maybeTrimGluedLetter(nume, text) : undefined, mrz.prenume)
+    );
   } else {
     const prenumeOrder =
       kind === "old"
@@ -530,7 +568,10 @@ export function parseRomanianIdText(text: string, kind?: CiKind): CiOcrResult {
         : [labeledNume, harvested.nume, mrz.nume];
     const prenume = firstAcceptable(prenumeOrder);
     const nume = firstAcceptable(numeOrder.filter((n) => !namesEqual(n, prenume)));
-    Object.assign(result, finalizeNames(nume, prenume));
+    Object.assign(
+      result,
+      finalizeNames(nume ? maybeTrimGluedLetter(nume, text) : undefined, prenume)
+    );
   }
 
   return result;
