@@ -5,7 +5,7 @@ function lanOrigin(port: string): string | null {
   const nets = os.networkInterfaces();
   for (const addrs of Object.values(nets)) {
     for (const a of addrs ?? []) {
-      const family = typeof a.family === "string" ? a.family : String(a.family);
+      const family = String(a.family);
       if (family !== "IPv4" && family !== "4") continue;
       if (a.internal) continue;
       if (a.address.startsWith("169.254.")) continue;
