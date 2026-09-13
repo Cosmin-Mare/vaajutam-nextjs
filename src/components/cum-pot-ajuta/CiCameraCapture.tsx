@@ -5,8 +5,8 @@ import { useRouter } from "next/router";
 import { CiUploadCard } from "@/components/cum-pot-ajuta/CiUploadCard";
 import { ciOcrHasAnyField } from "@/lib/ci-recognize";
 import { saveCiOcrLocal } from "@/lib/ci-ocr-local";
+import { isCiKind, type CiOcrResult } from "@/lib/ci-id-ocr";
 import { isCiSessionId } from "@/lib/ci-session-id";
-import type { CiOcrResult } from "@/lib/ci-id-ocr";
 
 async function publishToSession(sessionId: string, data: CiOcrResult): Promise<boolean> {
   try {
@@ -35,6 +35,12 @@ export function CiCameraCapture() {
       : router.query.s
     : undefined;
   const sessionId = isCiSessionId(sessionParam) ? sessionParam : "";
+  const kindParam = router.isReady
+    ? Array.isArray(router.query.t)
+      ? router.query.t[0]
+      : router.query.t
+    : undefined;
+  const initialKind = isCiKind(kindParam) ? kindParam : undefined;
 
   const goToForm = (data?: CiOcrResult) => {
     if (data && ciOcrHasAnyField(data)) saveCiOcrLocal(data);
@@ -48,6 +54,7 @@ export function CiCameraCapture() {
         hidePhoneQr
         kicker="Pe telefon, în câteva secunde"
         title="Fotografiază cartea de identitate"
+        initialKind={initialKind}
         onExtracted={() => undefined}
         afterRecognize={async (data) => {
           saveCiOcrLocal(data);

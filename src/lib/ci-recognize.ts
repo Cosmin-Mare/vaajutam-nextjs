@@ -1,4 +1,10 @@
-import { ocrResultScore, parseRomanianIdText, type CiOcrResult } from "@/lib/ci-id-ocr";
+import {
+  mergeCiOcr,
+  ocrResultScore,
+  parseRomanianIdText,
+  type CiKind,
+  type CiOcrResult,
+} from "@/lib/ci-id-ocr";
 
 export function isCiPhotoFile(file: File): boolean {
   const t = file.type.toLowerCase();
@@ -145,6 +151,41 @@ function mrzStrip(src: HTMLCanvasElement): HTMLCanvasElement {
   return dst;
 }
 
+/** Right-hand visual zone: names + CNP on both old laminated and new eID fronts. */
+function visualDataBand(src: HTMLCanvasElement): HTMLCanvasElement {
+  const x = Math.round(src.width * 0.26);
+  const y = Math.round(src.height * 0.06);
+  const w = Math.max(1, src.width - x - Math.round(src.width * 0.03));
+  const h = Math.max(1, Math.round(src.height * 0.58));
+  const dst = document.createElement("canvas");
+  dst.width = w;
+  dst.height = h;
+  const ctx = dst.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.drawImage(src, x, y, w, h, 0, 0, w, h);
+  return dst;
+}
+
+function considerParse(
+  current: { result: CiOcrResult; text: string; canvas: HTMLCanvasElement; score: number },
+  extraText: string,
+  kind?: CiKind
+): { result: CiOcrResult; text: string; canvas: HTMLCanvasElement; score: number } {
+  const extra = parseRomanianIdText(extraText, kind);
+  const comboText = `${current.text}\n${extraText}`;
+  const combo = parseRomanianIdText(comboText, kind);
+  const filled = mergeCiOcr(current.result, extra);
+  const comboScore = ocrResultScore(combo, comboText, kind);
+  const filledScore = ocrResultScore(filled, comboText, kind);
+  if (comboScore > current.score && comboScore >= filledScore) {
+    return { result: combo, text: comboText, canvas: current.canvas, score: comboScore };
+  }
+  if (filledScore > current.score) {
+    return { result: filled, text: comboText, canvas: current.canvas, score: filledScore };
+  }
+  return current;
+}
+
 function cardBounds(
   ctx: CanvasRenderingContext2D,
   w: number,
@@ -192,7 +233,10 @@ function cardBounds(
 }
 
 /** Client-only: Tesseract reads the image in the browser. The photo is not uploaded. */
-export async function recognizeCiImage(file: File | HTMLCanvasElement): Promise<CiOcrResult> {
+export async function recognizeCiImage(
+  file: File | HTMLCanvasElement,
+  kind?: CiKind
+): Promise<CiOcrResult> {
   const source = file instanceof File ? await downscaleForOcr(file) : file;
   const { createWorker, PSM } = await import("tesseract.js");
   const worker = await createWorker("eng");
@@ -204,8 +248,8 @@ export async function recognizeCiImage(file: File | HTMLCanvasElement): Promise<
       const {
         data: { text },
       } = await worker.recognize(canvas);
-      const result = parseRomanianIdText(text);
-      const score = ocrResultScore(result, text);
+      const result = parseRomanianIdText(text, kind);
+      const score = ocrResultScore(result, text, kind);
       if (!best || score > best.score) best = { result, text, canvas, score };
     }
     if (best && best.score < 10 && source.width >= source.height) {
@@ -213,18 +257,25 @@ export async function recognizeCiImage(file: File | HTMLCanvasElement): Promise<
       const {
         data: { text },
       } = await worker.recognize(flipped);
-      const result = parseRomanianIdText(text);
-      const score = ocrResultScore(result, text);
+      const result = parseRomanianIdText(text, kind);
+      const score = ocrResultScore(result, text, kind);
       if (score > best.score) best = { result, text, canvas: flipped, score };
     }
     if (best) {
-      await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK });
-      const {
-        data: { text: mrzText },
-      } = await worker.recognize(mrzStrip(best.canvas));
-      const mergedText = `${best.text}\n${mrzText}`;
-      const merged = parseRomanianIdText(mergedText);
-      if (ocrResultScore(merged, mergedText) >= best.score) return merged;
+      if (kind !== "new") {
+        await worker.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK });
+        const {
+          data: { text: mrzText },
+        } = await worker.recognize(mrzStrip(best.canvas));
+        best = considerParse(best, mrzText, kind);
+      }
+      if (!best.result.nume || !best.result.prenume || !best.result.cnp) {
+        await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
+        const {
+          data: { text: bandText },
+        } = await worker.recognize(visualDataBand(best.canvas));
+        best = considerParse(best, bandText, kind);
+      }
       return best.result;
     }
     return {};
@@ -249,7 +300,7 @@ export function ciOcrMissing(data: CiOcrResult): string[] {
   return missing;
 }
 
-export function ciOcrWarning(data: CiOcrResult): string | null {
+export function ciOcrWarning(data: CiOcrResult, kind?: CiKind): string | null {
   const miss: string[] = [];
   if (!data.nume) miss.push("numele");
   if (!data.prenume) miss.push("prenumele");
@@ -260,5 +311,11 @@ export function ciOcrWarning(data: CiOcrResult): string | null {
   }
   const list =
     miss.length === 1 ? miss[0]! : miss.length === 2 ? `${miss[0]} și ${miss[1]}` : `${miss[0]}, ${miss[1]} și ${miss[2]}`;
-  return `Nu am citit ${list}. Ține buletinul drept în cadru, cu cele două rânduri de jos vizibile, și încearcă din nou.`;
+  if (kind === "old") {
+    return `Nu am citit ${list}. Ține buletinul vechi drept în cadru, cu numele, CNP-ul și cele două rânduri de jos vizibile.`;
+  }
+  if (kind === "new") {
+    return `Nu am citit ${list}. Ține CI-ul nou drept în cadru, cu numele și CNP-ul vizibile pe față (coloana din dreapta).`;
+  }
+  return `Nu am citit ${list}. Ține buletinul drept în cadru, cu numele și CNP-ul vizibile (la CI-ul vechi și rândurile de jos), și încearcă din nou.`;
 }

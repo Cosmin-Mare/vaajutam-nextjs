@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { CiKind } from "@/lib/ci-id-ocr";
 
 type LiveProps = {
   stream: MediaStream;
+  kind: CiKind;
   onCapture: (file: File) => void;
   onClose: () => void;
 };
 
 type GuideProps = {
+  kind: CiKind;
   onShoot: () => void;
   onClose: () => void;
 };
@@ -73,17 +76,28 @@ async function bumpTrackResolution(stream: MediaStream): Promise<void> {
   }
 }
 
-function FrameGhost() {
+function FrameGhost({ kind }: { kind: CiKind }) {
+  if (kind === "old") {
+    return (
+      <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
+        <rect x="8" y="10" width="52" height="64" rx="6" />
+        <circle cx="34" cy="34" r="12" />
+        <rect x="72" y="16" width="132" height="8" rx="4" />
+        <rect x="72" y="32" width="108" height="8" rx="4" />
+        <rect x="72" y="48" width="88" height="8" rx="4" />
+        <rect className="ci-cam-ghost-mrz" x="8" y="96" width="204" height="7" rx="2" />
+        <rect className="ci-cam-ghost-mrz" x="8" y="110" width="204" height="7" rx="2" />
+      </svg>
+    );
+  }
   return (
     <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
       <rect x="8" y="10" width="52" height="64" rx="6" />
       <circle cx="34" cy="34" r="12" />
-      <rect x="72" y="16" width="132" height="9" rx="4" />
-      <rect x="72" y="32" width="108" height="8" rx="4" />
+      <rect className="ci-cam-ghost-cnp" x="72" y="14" width="96" height="8" rx="4" />
+      <rect x="72" y="32" width="132" height="8" rx="4" />
       <rect x="72" y="48" width="118" height="8" rx="4" />
-      <rect x="72" y="64" width="88" height="8" rx="4" />
-      <rect className="ci-cam-ghost-mrz" x="8" y="96" width="204" height="7" rx="2" />
-      <rect className="ci-cam-ghost-mrz" x="8" y="110" width="204" height="7" rx="2" />
+      <rect x="72" y="64" width="108" height="8" rx="4" />
     </svg>
   );
 }
@@ -172,12 +186,14 @@ async function stillFromTrack(track: MediaStreamTrack): Promise<ImageBitmap | nu
 }
 
 function CameraShell({
+  kind,
   onClose,
   onSnap,
   snapDisabled,
   extraTips,
   children,
 }: {
+  kind: CiKind;
   onClose: () => void;
   onSnap: () => void;
   snapDisabled?: boolean;
@@ -202,20 +218,31 @@ function CameraShell({
       {children}
       <div className="ci-cam-stage">
         <p id="ci-cam-title" className="ci-cam-title">
-          Așază buletinul în cadru
+          {kind === "old" ? "Așază buletinul vechi în cadru" : "Așază CI-ul nou în cadru"}
         </p>
         <div className="ci-cam-frame">
           <span className="ci-cam-corner ci-cam-tl" aria-hidden />
           <span className="ci-cam-corner ci-cam-tr" aria-hidden />
           <span className="ci-cam-corner ci-cam-bl" aria-hidden />
           <span className="ci-cam-corner ci-cam-br" aria-hidden />
-          <FrameGhost />
-          <span className="ci-cam-mrz-tag">Rândurile de jos</span>
+          <FrameGhost kind={kind} />
+          {kind === "new" ? <span className="ci-cam-data-tag">Nume · CNP</span> : null}
+          {kind === "old" ? <span className="ci-cam-mrz-tag">Rândurile de jos</span> : null}
         </div>
         <ul className="ci-cam-tips">
-          <li>Fața CI-ului, drept, tot cardul în dreptunghi</li>
-          <li>Lumină din față, fără reflexii pe plastic</li>
-          <li>Se văd numele, CNP-ul și cele două rânduri de jos</li>
+          {kind === "old" ? (
+            <>
+              <li>Fața cu fotografia, tot cardul în dreptunghi</li>
+              <li>Se văd numele, CNP-ul și cele două rânduri de jos</li>
+              <li>Lumină din față, fără reflexii pe plastic</li>
+            </>
+          ) : (
+            <>
+              <li>Fața cu fotografia, tot cardul în dreptunghi</li>
+              <li>Numele, prenumele și CNP-ul se citesc în dreapta</li>
+              <li>Fără reflexii pe plastic — nu e nevoie de spate</li>
+            </>
+          )}
           {extraTips}
         </ul>
       </div>
@@ -236,9 +263,10 @@ function CameraShell({
   );
 }
 
-export function CiCameraGuide({ onShoot, onClose }: GuideProps) {
+export function CiCameraGuide({ kind, onShoot, onClose }: GuideProps) {
   return (
     <CameraShell
+      kind={kind}
       onClose={onClose}
       onSnap={onShoot}
       extraTips={<li>Apoi potrivește buletinul ca în dreptunghiul alb</li>}
@@ -246,7 +274,7 @@ export function CiCameraGuide({ onShoot, onClose }: GuideProps) {
   );
 }
 
-export function CiLiveCamera({ stream, onCapture, onClose }: LiveProps) {
+export function CiLiveCamera({ stream, kind, onCapture, onClose }: LiveProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -296,7 +324,7 @@ export function CiLiveCamera({ stream, onCapture, onClose }: LiveProps) {
   };
 
   return (
-    <CameraShell onClose={onClose} onSnap={() => void snap()} snapDisabled={!ready || busy}>
+    <CameraShell kind={kind} onClose={onClose} onSnap={() => void snap()} snapDisabled={!ready || busy}>
       <video
         ref={videoRef}
         className="ci-cam-video"

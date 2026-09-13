@@ -1272,6 +1272,104 @@ canvas#signature-canvas {
   line-height: 1.45;
 }
 
+.ci-kind {
+  margin: 1rem auto 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  max-width: 36rem;
+  width: 100%;
+}
+
+.ci-kind-legend {
+  float: none;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 0.55rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ci-kind-opts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.ci-kind-opt {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.65rem 0.7rem;
+  border: 1.5px solid #d6d8db;
+  border-radius: 0.85rem;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ci-kind-opt:hover,
+.ci-kind-opt:focus-visible {
+  border-color: rgba(226, 0, 116, 0.5);
+  outline: none;
+}
+
+.ci-kind-opt[aria-checked="true"] {
+  border-color: #e20074;
+  background: rgba(226, 0, 116, 0.06);
+  box-shadow: 0 0 0 3px rgba(226, 0, 116, 0.12);
+}
+
+.ci-kind-opt-art {
+  display: flex;
+  justify-content: center;
+}
+
+.ci-kind-opt-art .ci-id-art {
+  width: 5.4rem;
+}
+
+.ci-kind-opt-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.ci-kind-opt-copy strong {
+  font-size: 0.95rem;
+}
+
+.ci-kind-opt-copy span {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #6c757d;
+}
+
+.ci-kind-need .ci-kind-opt {
+  border-color: rgba(200, 35, 51, 0.45);
+}
+
+.ci-kind-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #b02a37;
+}
+
+.ci-drop-wait {
+  opacity: 0.72;
+}
+
+@media (max-width: 420px) {
+  .ci-kind-opts {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ci-drop {
   margin: 1rem auto 0;
   display: flex;
@@ -2008,24 +2106,40 @@ canvas#signature-canvas {
   pointer-events: none;
 }
 
+.ci-cam-ghost-cnp {
+  stroke: rgba(226, 0, 116, 0.7);
+}
+
 .ci-cam-ghost-mrz {
-  stroke: rgba(226, 0, 116, 0.55);
+  stroke: rgba(226, 0, 116, 0.7);
+}
+
+.ci-cam-data-tag,
+.ci-cam-mrz-tag {
+  position: absolute;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  padding: 0.1rem 0.42rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ci-cam-data-tag {
+  top: 22%;
+  right: 8%;
+  background: rgba(226, 0, 116, 0.62);
 }
 
 .ci-cam-mrz-tag {
-  position: absolute;
   left: 50%;
-  bottom: 6%;
+  bottom: 5%;
   transform: translateX(-50%);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
-  background: rgba(226, 0, 116, 0.55);
-  padding: 0.12rem 0.45rem;
-  border-radius: 999px;
-  pointer-events: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 600;
 }
 
 .ci-cam-corner {

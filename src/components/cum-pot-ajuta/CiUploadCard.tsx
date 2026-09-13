@@ -17,7 +17,7 @@ import {
   prepareCiPhoto,
   recognizeCiImage,
 } from "@/lib/ci-recognize";
-import type { CiOcrResult } from "@/lib/ci-id-ocr";
+import type { CiKind, CiOcrResult } from "@/lib/ci-id-ocr";
 
 type Stage = "idle" | "reading" | "done" | "partial" | "error";
 
@@ -30,6 +30,7 @@ type Props = {
   title?: string;
   afterRecognize?: (data: CiOcrResult) => Promise<boolean | void>;
   doneExtra?: (ctx: { paired: boolean }) => ReactNode;
+  initialKind?: CiKind;
 };
 
 const READ_HINTS = ["Pregătesc poza…", "Citesc textul de pe CI…", "Caut numele și CNP-ul…"];
@@ -42,17 +43,29 @@ function foundBits(data: CiOcrResult) {
   return bits;
 }
 
-function CiIdArt() {
+function CiIdArt({ kind }: { kind?: CiKind }) {
+  const old = kind === "old";
   return (
     <svg className="ci-id-art" viewBox="0 0 220 132" aria-hidden="true">
       <rect className="ci-id-art-body" x="4" y="8" width="212" height="116" rx="10" />
       <rect x="16" y="24" width="58" height="72" rx="6" />
       <circle cx="45" cy="50" r="14" />
-      <rect x="88" y="28" width="108" height="10" rx="5" />
-      <rect x="88" y="46" width="86" height="8" rx="4" />
-      <rect x="88" y="62" width="96" height="8" rx="4" />
-      <rect x="16" y="104" width="188" height="4" rx="2" />
-      <rect x="16" y="112" width="188" height="4" rx="2" />
+      {old ? (
+        <>
+          <rect x="88" y="28" width="108" height="10" rx="5" />
+          <rect x="88" y="46" width="86" height="8" rx="4" />
+          <rect x="88" y="62" width="96" height="8" rx="4" />
+          <rect x="16" y="104" width="188" height="4" rx="2" />
+          <rect x="16" y="112" width="188" height="4" rx="2" />
+        </>
+      ) : (
+        <>
+          <rect x="88" y="24" width="78" height="8" rx="4" />
+          <rect x="88" y="40" width="108" height="9" rx="4" />
+          <rect x="88" y="54" width="96" height="8" rx="4" />
+          <rect x="88" y="68" width="86" height="8" rx="4" />
+        </>
+      )}
     </svg>
   );
 }
@@ -66,11 +79,16 @@ export function CiUploadCard({
   title = "Fotografiază cartea de identitate",
   afterRecognize,
   doneExtra,
+  initialKind,
 }: Props) {
   const cameraRef = useRef<HTMLInputElement | null>(null);
   const galleryRef = useRef<HTMLInputElement | null>(null);
   const previewRef = useRef<string | null>(null);
   const camFailed = useRef(false);
+  const [kind, setKind] = useState<CiKind | undefined>(initialKind);
+  const [kindNeed, setKindNeed] = useState(false);
+  const kindRef = useRef(kind);
+  kindRef.current = kind;
   const [stage, setStage] = useState<Stage>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -92,6 +110,10 @@ export function CiUploadCard({
     }
     setPreview(null);
   };
+
+  useEffect(() => {
+    if (initialKind) setKind(initialKind);
+  }, [initialKind]);
 
   useEffect(
     () => () => {
@@ -117,7 +139,7 @@ export function CiUploadCard({
         setBits([]);
         setMissing(ciOcrMissing(parsed));
         setStage("error");
-        setError(ciOcrWarning(parsed));
+        setError(ciOcrWarning(parsed, kindRef.current));
         return;
       }
       let sent = false;
@@ -133,7 +155,7 @@ export function CiUploadCard({
         return;
       }
       setStage("partial");
-      setError(ciOcrWarning(parsed));
+      setError(ciOcrWarning(parsed, kindRef.current));
     },
     [afterRecognize, onExtracted]
   );
@@ -160,7 +182,7 @@ export function CiUploadCard({
     setError(null);
     const wait = new Promise((r) => window.setTimeout(r, 900));
     try {
-      const parsed = await recognizeCiImage(photo);
+      const parsed = await recognizeCiImage(photo, kindRef.current);
       await wait;
       await applyParsed(parsed, false);
     } catch (err) {
@@ -170,6 +192,17 @@ export function CiUploadCard({
       setMissing(["Nume", "Prenume", "CNP"]);
       setError("Nu am putut citi poza. Fotografiază din nou, cu buletinul în cadru.");
     }
+  };
+
+  const pickKind = (next: CiKind) => {
+    setKind(next);
+    setKindNeed(false);
+  };
+
+  const ensureKind = () => {
+    if (kindRef.current) return true;
+    setKindNeed(true);
+    return false;
   };
 
   const reset = () => {
@@ -187,6 +220,7 @@ export function CiUploadCard({
   };
 
   const retryCamera = () => {
+    if (!ensureKind()) return;
     setError(null);
     if (!canUseLiveCamera() || camFailed.current) {
       setCamGuide(true);
@@ -236,6 +270,51 @@ export function CiUploadCard({
         </p>
       </div>
 
+      {stage === "idle" || stage === "error" ? (
+        <fieldset className={"ci-kind" + (kindNeed ? " ci-kind-need" : "")}>
+        <legend id="ci-kind-legend" className="ci-kind-legend">
+          Ce fel de carte de identitate ai?
+        </legend>
+        <div className="ci-kind-opts" role="radiogroup" aria-labelledby="ci-kind-legend">
+          <button
+            type="button"
+            className="ci-kind-opt"
+            role="radio"
+            aria-checked={kind === "new"}
+            onClick={() => pickKind("new")}
+          >
+            <span className="ci-kind-opt-art">
+              <CiIdArt kind="new" />
+            </span>
+            <span className="ci-kind-opt-copy">
+              <strong>CI nou</strong>
+              <span>Plastic, din 2021. Nume și CNP pe față, fără rânduri jos.</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="ci-kind-opt"
+            role="radio"
+            aria-checked={kind === "old"}
+            onClick={() => pickKind("old")}
+          >
+            <span className="ci-kind-opt-art">
+              <CiIdArt kind="old" />
+            </span>
+            <span className="ci-kind-opt-copy">
+              <strong>CI vechi</strong>
+              <span>Laminat, cu două rânduri de jos pe față.</span>
+            </span>
+          </button>
+        </div>
+        {kindNeed ? (
+          <p className="ci-kind-hint" role="alert">
+            Alege întâi tipul de CI, apoi fotografiază.
+          </p>
+        ) : null}
+      </fieldset>
+      ) : null}
+
       <input
         ref={cameraRef}
         type="file"
@@ -247,7 +326,7 @@ export function CiUploadCard({
           const file = e.currentTarget.files?.[0];
           e.currentTarget.value = "";
           setCamGuide(false);
-          if (file) void readFile(file);
+          if (file && ensureKind()) void readFile(file);
         }}
       />
       <input
@@ -259,7 +338,7 @@ export function CiUploadCard({
         onChange={(e) => {
           const file = e.currentTarget.files?.[0];
           e.currentTarget.value = "";
-          if (file) void readFile(file);
+          if (file && ensureKind()) void readFile(file);
         }}
       />
 
@@ -267,7 +346,10 @@ export function CiUploadCard({
         <div className={"ci-card-split" + (showQr ? " ci-card-split-qr" : "")}>
           <div
             className={
-              "ci-drop" + (dragOver ? " ci-drop-hot" : "") + (stage === "error" ? " ci-drop-err" : "")
+              "ci-drop" +
+              (dragOver ? " ci-drop-hot" : "") +
+              (stage === "error" ? " ci-drop-err" : "") +
+              (!kind ? " ci-drop-wait" : "")
             }
             onDragEnter={(e) => {
               e.preventDefault();
@@ -285,7 +367,7 @@ export function CiUploadCard({
               e.preventDefault();
               setDragOver(false);
               const file = e.dataTransfer.files?.[0];
-              if (file) void readFile(file);
+              if (file && ensureKind()) void readFile(file);
             }}
           >
             {preview ? (
@@ -296,15 +378,36 @@ export function CiUploadCard({
             ) : (
               <button type="button" className="ci-drop-art" onClick={retryCamera}>
                 <span className="ci-id-float">
-                  <CiIdArt />
+                  <CiIdArt kind={kind} />
                 </span>
                 <span className="ci-drop-hint">
-                  {dragOver ? "Lasă poza aici" : "Așază buletinul în cadru, pe lumină"}
+                  {dragOver
+                    ? "Lasă poza aici"
+                    : kind === "old"
+                      ? "Așază buletinul vechi în cadru, pe lumină"
+                      : kind === "new"
+                        ? "Așază CI-ul nou în cadru, pe lumină"
+                        : "Alege întâi tipul de CI"}
                 </span>
                 <ul className="ci-guide">
-                  <li>Tot cardul, drept, în dreptunghi</li>
-                  <li>Fără reflexii pe nume sau CNP</li>
-                  <li>Cele două rânduri de jos vizibile</li>
+                  {kind === "old" ? (
+                    <>
+                      <li>Fața cu fotografia, tot cardul drept</li>
+                      <li>Fără reflexii pe nume sau CNP</li>
+                      <li>Cele două rânduri de jos vizibile</li>
+                    </>
+                  ) : kind === "new" ? (
+                    <>
+                      <li>Fața cu fotografia, tot cardul drept</li>
+                      <li>Fără reflexii pe nume sau CNP</li>
+                      <li>Nu e nevoie de spatele cardului</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Alege CI nou sau CI vechi mai sus</li>
+                      <li>Apoi fotografiază fața cardului</li>
+                    </>
+                  )}
                 </ul>
               </button>
             )}
@@ -314,7 +417,10 @@ export function CiUploadCard({
                   <button
                     type="button"
                     className="btn btn-primary-pink-round ci-drop-primary"
-                    onClick={() => galleryRef.current?.click()}
+                    onClick={() => {
+                      if (!ensureKind()) return;
+                      galleryRef.current?.click();
+                    }}
                   >
                     Alege o poză
                   </button>
@@ -331,7 +437,14 @@ export function CiUploadCard({
                   >
                     Fotografiază
                   </button>
-                  <button type="button" className="btn btn-secondary-pink" onClick={() => galleryRef.current?.click()}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary-pink"
+                    onClick={() => {
+                      if (!ensureKind()) return;
+                      galleryRef.current?.click();
+                    }}
+                  >
                     Alege din galerie
                   </button>
                 </>
@@ -340,7 +453,7 @@ export function CiUploadCard({
           </div>
           {showQr ? (
             <div className="ci-phone-panel ci-phone-panel-open">
-              <CiPhoneQr sessionId={sessionId} onExtracted={(data) => void applyParsed(data, true)} />
+              <CiPhoneQr sessionId={sessionId} kind={kind} onExtracted={(data) => void applyParsed(data, true)} />
             </div>
           ) : null}
         </div>
@@ -449,11 +562,12 @@ export function CiUploadCard({
         </div>
       ) : null}
 
-      {camGuide ? <CiCameraGuide onShoot={openNativeCamera} onClose={() => setCamGuide(false)} /> : null}
+      {camGuide && kind ? <CiCameraGuide kind={kind} onShoot={openNativeCamera} onClose={() => setCamGuide(false)} /> : null}
 
-      {camStream ? (
+      {camStream && kind ? (
         <CiLiveCamera
           stream={camStream}
+          kind={kind}
           onCapture={(file) => {
             setCamStream(null);
             void readFile(file);
