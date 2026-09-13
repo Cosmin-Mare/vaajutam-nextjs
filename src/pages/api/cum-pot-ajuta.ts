@@ -2,10 +2,7 @@ import formidable from "formidable";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { normalizeCnp, validCNP } from "@/lib/cnp";
 import { isFirebaseConfigured } from "@/lib/firebase-admin";
-import {
-  firestoreInsertForm230,
-  form230CnpExistsForTaxYear,
-} from "@/lib/firestore-form230";
+import { firestoreInsertForm230 } from "@/lib/firestore-form230";
 import { generateDonationPdf } from "@/lib/pdf-donation";
 import {
   driveEnvPresence,
@@ -66,18 +63,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (semnatura === "" || semnatura === "undefined" || !semnatura.startsWith("data:image/")) {
     return res.status(400).json({ ok: false, error: "semnatura" });
-  }
-
-  if (isFirebaseConfigured()) {
-    try {
-      const exists = await form230CnpExistsForTaxYear(cnp);
-      if (exists) {
-        return res.status(409).json({ ok: false, error: "duplicate" });
-      }
-    } catch (e) {
-      console.error("[cum-pot-ajuta] duplicate check", e);
-      return res.status(500).json({ ok: false, error: "duplicate_check" });
-    }
   }
 
   const fieldBody = {
