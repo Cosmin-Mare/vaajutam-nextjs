@@ -78,7 +78,7 @@ export async function prepareCiPhoto(file: File): Promise<File> {
 
 async function downscaleForOcr(file: File): Promise<HTMLCanvasElement> {
   const bitmap = await decodePhotoBitmap(file);
-  const maxW = 1800;
+  const maxW = 2400;
   const scale = bitmap.width > maxW ? maxW / bitmap.width : 1;
   const w = Math.max(1, Math.round(bitmap.width * scale));
   const h = Math.max(1, Math.round(bitmap.height * scale));

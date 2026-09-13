@@ -25,6 +25,15 @@ export function canUseLiveCamera(): boolean {
 export async function requestCiCamera(): Promise<MediaStream> {
   if (!canUseLiveCamera()) throw new Error("no-camera");
   const attempts: MediaStreamConstraints[] = [
+    {
+      audio: false,
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      },
+    },
+    { audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } } },
     { audio: false, video: { facingMode: { ideal: "environment" } } },
     { audio: false, video: { facingMode: "environment" } },
     { audio: false, video: true },
@@ -32,12 +41,36 @@ export async function requestCiCamera(): Promise<MediaStream> {
   let last: unknown;
   for (const constraints of attempts) {
     try {
-      return await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      await bumpTrackResolution(stream);
+      return stream;
     } catch (err) {
       last = err;
     }
   }
   throw last instanceof Error ? last : new Error("no-camera");
+}
+
+async function bumpTrackResolution(stream: MediaStream): Promise<void> {
+  const track = stream.getVideoTracks()[0];
+  if (!track?.applyConstraints) return;
+  const caps = track.getCapabilities?.() as
+    | { width?: { max?: number }; height?: { max?: number } }
+    | undefined;
+  const widthIdeal = Math.min(caps?.width?.max ?? 1920, 3840);
+  const heightIdeal = Math.min(caps?.height?.max ?? 1080, 2160);
+  try {
+    await track.applyConstraints({
+      width: { ideal: widthIdeal },
+      height: { ideal: heightIdeal },
+    });
+  } catch {
+    try {
+      await track.applyConstraints({ width: { ideal: 1920 } });
+    } catch {
+      /* keep whatever the stream already is */
+    }
+  }
 }
 
 function FrameGhost() {
@@ -55,35 +88,59 @@ function FrameGhost() {
   );
 }
 
-function cropVideoToFrame(video: HTMLVideoElement, frame: HTMLElement): HTMLCanvasElement {
+function overlayCrop(
+  sourceW: number,
+  sourceH: number,
+  video: HTMLVideoElement,
+  frame: HTMLElement
+): { sx: number; sy: number; sw: number; sh: number } {
+  const mappedW = video.videoWidth || sourceW;
+  const mappedH = video.videoHeight || sourceH;
   const vRect = video.getBoundingClientRect();
   const oRect = frame.getBoundingClientRect();
-  const vw = video.videoWidth;
-  const vh = video.videoHeight;
-  const scale = Math.max(vRect.width / vw, vRect.height / vh);
-  const dispW = vw * scale;
-  const dispH = vh * scale;
+  const cover = Math.max(vRect.width / mappedW, vRect.height / mappedH);
+  const dispW = mappedW * cover;
+  const dispH = mappedH * cover;
   const offX = (vRect.width - dispW) / 2;
   const offY = (vRect.height - dispH) / 2;
-  const pad = 0.04;
-  let sx = (oRect.left - vRect.left - offX) / scale;
-  let sy = (oRect.top - vRect.top - offY) / scale;
-  let sw = oRect.width / scale;
-  let sh = oRect.height / scale;
+  const pad = 0.1;
+  let sx = (oRect.left - vRect.left - offX) / cover;
+  let sy = (oRect.top - vRect.top - offY) / cover;
+  let sw = oRect.width / cover;
+  let sh = oRect.height / cover;
   sx -= sw * pad;
   sy -= sh * pad;
   sw += sw * pad * 2;
   sh += sh * pad * 2;
+  const scaleX = sourceW / mappedW;
+  const scaleY = sourceH / mappedH;
+  sx *= scaleX;
+  sy *= scaleY;
+  sw *= scaleX;
+  sh *= scaleY;
   sx = Math.max(0, sx);
   sy = Math.max(0, sy);
-  sw = Math.min(vw - sx, sw);
-  sh = Math.min(vh - sy, sh);
+  sw = Math.min(sourceW - sx, sw);
+  sh = Math.min(sourceH - sy, sh);
+  return { sx, sy, sw, sh };
+}
+
+function drawCrop(
+  source: CanvasImageSource,
+  sourceW: number,
+  sourceH: number,
+  video: HTMLVideoElement,
+  frame: HTMLElement
+): HTMLCanvasElement {
+  const { sx, sy, sw, sh } = overlayCrop(sourceW, sourceH, video, frame);
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(sw));
   canvas.height = Math.max(1, Math.round(sh));
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("canvas");
-  ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(source, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
 
@@ -95,9 +152,23 @@ function canvasToFile(canvas: HTMLCanvasElement): Promise<File> {
         else resolve(new File([blob], "ci.jpg", { type: "image/jpeg" }));
       },
       "image/jpeg",
-      0.92
+      0.95
     );
   });
+}
+
+type ImageCaptureLike = { takePhoto: () => Promise<Blob> };
+
+async function stillFromTrack(track: MediaStreamTrack): Promise<ImageBitmap | null> {
+  const Ctor = (window as unknown as { ImageCapture?: new (t: MediaStreamTrack) => ImageCaptureLike })
+    .ImageCapture;
+  if (!Ctor) return null;
+  try {
+    const blob = await new Ctor(track).takePhoto();
+    return await createImageBitmap(blob);
+  } catch {
+    return null;
+  }
 }
 
 function CameraShell({
@@ -195,12 +266,27 @@ export function CiLiveCamera({ stream, onCapture, onClose }: LiveProps) {
   const snap = async () => {
     const video = videoRef.current;
     const frame = video?.parentElement?.querySelector(".ci-cam-frame") as HTMLElement | null;
+    const track = stream.getVideoTracks()[0];
     if (!video || !frame || !ready || busy || !video.videoWidth) return;
     setBusy(true);
     setFlash(true);
     window.setTimeout(() => setFlash(false), 160);
     try {
-      const canvas = cropVideoToFrame(video, frame);
+      await new Promise<void>((resolve) => {
+        const done = () => resolve();
+        if ("requestVideoFrameCallback" in video) {
+          (video as HTMLVideoElement & { requestVideoFrameCallback: (cb: () => void) => void }).requestVideoFrameCallback(
+            done
+          );
+        } else {
+          requestAnimationFrame(() => requestAnimationFrame(() => done()));
+        }
+      });
+      const still = track ? await stillFromTrack(track) : null;
+      const canvas = still
+        ? drawCrop(still, still.width, still.height, video, frame)
+        : drawCrop(video, video.videoWidth, video.videoHeight, video, frame);
+      still?.close();
       const file = await canvasToFile(canvas);
       stream.getTracks().forEach((t) => t.stop());
       onCapture(file);

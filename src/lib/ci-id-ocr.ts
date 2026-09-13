@@ -217,7 +217,22 @@ function nameScore(name: string): number {
   if (n <= 3) score -= 10;
   if (n > 12 && !name.includes("-") && !/\s/.test(name)) score -= 8;
   if (tokens.some((t) => t.length <= 2) && tokens.length > 1) score -= 6;
+  if (looksLikeOcrJunk(name)) score -= 20;
   return score;
+}
+
+function looksLikeOcrJunk(name: string): boolean {
+  const tokens = name.split(/[ -]/).filter(Boolean);
+  if (tokens.length >= 3) return true;
+  if (tokens.filter((t) => t.length <= 3).length >= 2) return true;
+  if (tokens.some((t) => /[bcdfghjklmnpqrstvwxyz]{5,}/i.test(t))) return true;
+  return false;
+}
+
+function isAcceptableName(name: string | undefined): name is string {
+  if (!name) return false;
+  if (looksLikeOcrJunk(name)) return false;
+  return nameScore(name) >= 4;
 }
 
 function pickBestNames(
@@ -263,7 +278,7 @@ function harvestNames(lines: string[]): { nume?: string; prenume?: string } {
     const line = lines[i]!;
     if (LABELISH.test(line) || HEADER.test(line) || PLACEISH.test(line) || looksLikeMrzLine(line)) continue;
     const name = cleanNameCandidate(line);
-    if (!name) continue;
+    if (!name || looksLikeOcrJunk(name)) continue;
     cands.push({ name, index: i, score: nameScore(name) });
   }
   return pickBestNames(cands);
@@ -288,12 +303,13 @@ export function parseRomanianIdText(text: string): CiOcrResult {
     .map((l) => l.replace(/[«»]/g, "<").trim())
     .filter(Boolean);
 
+  const mrzCnp = parseMrzCnp(text);
   const spaced = text.match(/\b[1-8](?:\s*\d){12}\b/g) ?? [];
   const packed = upper.match(/(?<!\d)[1-8]\d{12}(?!\d)/g) ?? [];
   result.cnp = pickValidCnp([
     ...spaced,
     ...packed,
-    parseMrzCnp(text) ?? "",
+    mrzCnp ?? "",
     ...allDigitCnps(text),
   ]);
 
@@ -307,12 +323,15 @@ export function parseRomanianIdText(text: string): CiOcrResult {
   if (mrzNamesTrustworthy(mrz)) {
     result.nume = mrz.nume;
     result.prenume = mrz.prenume;
-  } else if (harvested.nume && harvested.prenume) {
+  } else if (mrzCnp) {
+    result.nume = pickBestString([mrz.nume, labeledNume].filter(isAcceptableName));
+    result.prenume = pickBestString([mrz.prenume, labeledPrenume].filter(isAcceptableName));
+  } else if (harvested.nume && harvested.prenume && isAcceptableName(harvested.nume) && isAcceptableName(harvested.prenume)) {
     result.nume = harvested.nume;
     result.prenume = harvested.prenume;
   } else {
-    result.nume = pickBestString([mrz.nume, harvested.nume, labeledNume]);
-    result.prenume = pickBestString([mrz.prenume, harvested.prenume, labeledPrenume]);
+    result.nume = pickBestString([mrz.nume, harvested.nume, labeledNume].filter(isAcceptableName));
+    result.prenume = pickBestString([mrz.prenume, harvested.prenume, labeledPrenume].filter(isAcceptableName));
   }
 
   return result;
