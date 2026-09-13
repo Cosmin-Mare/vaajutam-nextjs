@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { CiIdScanner } from "@/components/cum-pot-ajuta/CiIdScanner";
-import { CiPhoneQr } from "@/components/cum-pot-ajuta/CiPhoneQr";
+import { CiUploadCard } from "@/components/cum-pot-ajuta/CiUploadCard";
 import {
   MobileSignaturePad,
   type MobileSignaturePadHandle,
@@ -29,31 +28,49 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [ciSessionId, setCiSessionId] = useState("");
+  const [filledFlash, setFilledFlash] = useState({ nume: false, prenume: false, cnp: false });
   const cnpStatus = cnpFieldStatus(cnp);
   const cnpBlocked = cnpStatus === "invalid" || cnpDuplicate;
 
   const applyOcr = useCallback((data: CiOcrResult) => {
-    if (data.nume) setNume(data.nume);
-    if (data.prenume) setPrenume(data.prenume);
+    const flash = { nume: false, prenume: false, cnp: false };
+    if (data.nume) {
+      setNume(data.nume);
+      flash.nume = true;
+    }
+    if (data.prenume) {
+      setPrenume(data.prenume);
+      flash.prenume = true;
+    }
     if (data.cnp) {
       setCnp(data.cnp);
       setCnpDuplicate(false);
+      flash.cnp = true;
     }
+    setFilledFlash(flash);
+    window.setTimeout(() => setFilledFlash({ nume: false, prenume: false, cnp: false }), 1600);
   }, []);
 
   useEffect(() => {
     const local = readCiOcrLocal();
     if (local) applyOcr(local);
+  }, [applyOcr]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     if (!window.matchMedia("(min-width: 768px)").matches) return;
-    const id = newCiSessionId();
-    setCiSessionId(id);
-    void fetch("/api/form230/ci-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    }).catch(() => undefined);
-  }, [applyOcr]);
+    try {
+      const id = newCiSessionId();
+      setCiSessionId(id);
+      void fetch("/api/form230/ci-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      }).catch(() => undefined);
+    } catch {
+      /* pairing optional */
+    }
+  }, []);
 
   return (
     <>
@@ -134,10 +151,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
             noValidate
           >
             <div className="col-12 pb-3">
-              <div className="ci-scan-row">
-                <CiIdScanner onExtracted={applyOcr} />
-                {ciSessionId ? <CiPhoneQr sessionId={ciSessionId} onExtracted={applyOcr} /> : null}
-              </div>
+              <CiUploadCard sessionId={ciSessionId} onExtracted={applyOcr} />
             </div>
             <div className="col-12 col-sm-6 pb-2">
               <label htmlFor="nume" className="form-label">
@@ -145,7 +159,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               </label>
               <input
                 type="text"
-                className="form-control"
+                className={"form-control" + (filledFlash.nume ? " ci-field-in" : "")}
                 id="nume"
                 name="nume"
                 required
@@ -161,7 +175,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               </label>
               <input
                 type="text"
-                className="form-control"
+                className={"form-control" + (filledFlash.prenume ? " ci-field-in" : "")}
                 id="prenume"
                 name="prenume"
                 required
@@ -182,7 +196,8 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 className={
                   "form-control" +
                   (cnpStatus === "valid" && !cnpDuplicate ? " is-valid" : "") +
-                  (cnpBlocked ? " is-invalid" : "")
+                  (cnpBlocked ? " is-invalid" : "") +
+                  (filledFlash.cnp ? " ci-field-in" : "")
                 }
                 id="cnp"
                 name="cnp"
