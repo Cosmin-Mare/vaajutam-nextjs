@@ -11,10 +11,11 @@ export type MobileSignaturePadHandle = {
 
 type Props = {
   invalid?: boolean;
+  onSignedChange?: (signed: boolean) => void;
 };
 
 export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(function MobileSignaturePad(
-  { invalid },
+  { invalid, onSignedChange },
   ref
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -65,6 +66,10 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
     };
   }, []);
 
+  useEffect(() => {
+    onSignedChange?.(!blank);
+  }, [blank, onSignedChange]);
+
   useImperativeHandle(ref, () => ({
     isEmpty: () => padRef.current?.isEmpty() ?? true,
     toDataURL: () => padRef.current?.toDataURL("image/png") ?? "",
@@ -82,7 +87,11 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
       <p className="signature-hint">Semnează cu degetul sau cu mouse-ul, în chenar.</p>
       <div
         ref={wrapRef}
-        className={"signature-wrap" + (invalid ? " signature-wrap-invalid" : "")}
+        className={
+          "signature-wrap" +
+          (invalid ? " signature-wrap-invalid" : "") +
+          (!blank ? " signature-wrap-ok" : "")
+        }
       >
         <canvas id="signature-canvas" ref={canvasRef} />
         {blank ? <p className="signature-placeholder">Semnează aici</p> : null}
