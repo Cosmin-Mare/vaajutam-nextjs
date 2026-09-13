@@ -78,7 +78,7 @@ function expandMashedGiven(tokens: string[]): string[] {
   const p = tokens[0]!;
   for (const sec of GIVEN_SECONDS) {
     if (!p.endsWith(sec) || p.length < sec.length + 3) continue;
-    let first = p
+    const first = p
       .slice(0, -sec.length)
       .replace(/K$/, "")
       .replace(/^S(?=L[AEIOU])/, "");
