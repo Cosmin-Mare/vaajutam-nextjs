@@ -48,22 +48,24 @@ function CiIdArt({ kind }: { kind?: CiKind }) {
   return (
     <svg className="ci-id-art" viewBox="0 0 220 132" aria-hidden="true">
       <rect className="ci-id-art-body" x="4" y="8" width="212" height="116" rx="10" />
-      <rect x="16" y="24" width="58" height="72" rx="6" />
-      <circle cx="45" cy="50" r="14" />
       {old ? (
         <>
-          <rect x="88" y="28" width="108" height="10" rx="5" />
-          <rect x="88" y="46" width="86" height="8" rx="4" />
-          <rect x="88" y="62" width="96" height="8" rx="4" />
-          <rect x="16" y="104" width="188" height="4" rx="2" />
-          <rect x="16" y="112" width="188" height="4" rx="2" />
+          <rect x="16" y="20" width="58" height="70" rx="6" />
+          <circle cx="45" cy="46" r="14" />
+          <rect className="ci-id-art-cnp" x="88" y="22" width="78" height="10" rx="5" />
+          <rect x="88" y="40" width="108" height="8" rx="4" />
+          <rect x="88" y="56" width="96" height="8" rx="4" />
+          <rect className="ci-id-art-mrz" x="16" y="100" width="188" height="5" rx="2" />
+          <rect className="ci-id-art-mrz" x="16" y="110" width="188" height="5" rx="2" />
         </>
       ) : (
         <>
-          <rect x="88" y="24" width="78" height="8" rx="4" />
-          <rect x="88" y="40" width="108" height="9" rx="4" />
-          <rect x="88" y="54" width="96" height="8" rx="4" />
-          <rect x="88" y="68" width="86" height="8" rx="4" />
+          <rect x="16" y="22" width="58" height="90" rx="6" />
+          <circle cx="45" cy="52" r="14" />
+          <rect x="88" y="26" width="108" height="9" rx="4" />
+          <rect x="88" y="42" width="96" height="8" rx="4" />
+          <rect x="88" y="58" width="72" height="6" rx="3" />
+          <rect className="ci-id-art-cnp" x="88" y="88" width="86" height="10" rx="5" />
         </>
       )}
     </svg>
@@ -288,7 +290,7 @@ export function CiUploadCard({
             </span>
             <span className="ci-kind-opt-copy">
               <strong>CI nou</strong>
-              <span>Plastic, din 2021. Nume și CNP pe față, fără rânduri jos.</span>
+              <span>Plastic, din 2021. Nume sus dreapta, CNP mai jos. Fără rânduri jos.</span>
             </span>
           </button>
           <button
@@ -303,7 +305,7 @@ export function CiUploadCard({
             </span>
             <span className="ci-kind-opt-copy">
               <strong>CI vechi</strong>
-              <span>Laminat, cu două rânduri de jos pe față.</span>
+              <span>Laminat. CNP sus lângă poză, nume sub el, două rânduri jos.</span>
             </span>
           </button>
         </div>
@@ -392,15 +394,15 @@ export function CiUploadCard({
                 <ul className="ci-guide">
                   {kind === "old" ? (
                     <>
-                      <li>Fața cu fotografia, tot cardul drept</li>
-                      <li>Fără reflexii pe nume sau CNP</li>
+                      <li>CNP-ul (roșu) sus, lângă fotografie</li>
+                      <li>Numele și prenumele sub CNP</li>
                       <li>Cele două rânduri de jos vizibile</li>
                     </>
                   ) : kind === "new" ? (
                     <>
-                      <li>Fața cu fotografia, tot cardul drept</li>
-                      <li>Fără reflexii pe nume sau CNP</li>
-                      <li>Nu e nevoie de spatele cardului</li>
+                      <li>Fotografia în stânga, tot cardul drept</li>
+                      <li>Numele și prenumele sus în dreapta</li>
+                      <li>CNP-ul mai jos, tot în dreapta — fără spate</li>
                     </>
                   ) : (
                     <>

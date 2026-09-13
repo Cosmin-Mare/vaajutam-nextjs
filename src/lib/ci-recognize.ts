@@ -151,12 +151,13 @@ function mrzStrip(src: HTMLCanvasElement): HTMLCanvasElement {
   return dst;
 }
 
-/** Right-hand visual zone: names + CNP on both old laminated and new eID fronts. */
-function visualDataBand(src: HTMLCanvasElement): HTMLCanvasElement {
-  const x = Math.round(src.width * 0.26);
-  const y = Math.round(src.height * 0.06);
+/** Right-hand visual zone: names + CNP. New card has names high and CNP lower. */
+function visualDataBand(src: HTMLCanvasElement, kind?: CiKind): HTMLCanvasElement {
+  const x = Math.round(src.width * (kind === "new" ? 0.28 : 0.26));
+  const y = Math.round(src.height * (kind === "new" ? 0.12 : kind === "old" ? 0.08 : 0.06));
   const w = Math.max(1, src.width - x - Math.round(src.width * 0.03));
-  const h = Math.max(1, Math.round(src.height * 0.58));
+  const frac = kind === "new" ? 0.62 : kind === "old" ? 0.42 : 0.58;
+  const h = Math.max(1, Math.round(src.height * frac));
   const dst = document.createElement("canvas");
   dst.width = w;
   dst.height = h;
@@ -273,7 +274,7 @@ export async function recognizeCiImage(
         await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO });
         const {
           data: { text: bandText },
-        } = await worker.recognize(visualDataBand(best.canvas));
+        } = await worker.recognize(visualDataBand(best.canvas, kind));
         best = considerParse(best, bandText, kind);
       }
       return best.result;
@@ -312,10 +313,10 @@ export function ciOcrWarning(data: CiOcrResult, kind?: CiKind): string | null {
   const list =
     miss.length === 1 ? miss[0]! : miss.length === 2 ? `${miss[0]} și ${miss[1]}` : `${miss[0]}, ${miss[1]} și ${miss[2]}`;
   if (kind === "old") {
-    return `Nu am citit ${list}. Ține buletinul vechi drept în cadru, cu numele, CNP-ul și cele două rânduri de jos vizibile.`;
+    return `Nu am citit ${list}. Ține buletinul vechi drept în cadru: CNP-ul sus, numele sub el, cele două rânduri de jos vizibile.`;
   }
   if (kind === "new") {
-    return `Nu am citit ${list}. Ține CI-ul nou drept în cadru, cu numele și CNP-ul vizibile pe față (coloana din dreapta).`;
+    return `Nu am citit ${list}. Ține CI-ul nou drept în cadru: fotografia stânga, numele sus în dreapta, CNP-ul mai jos.`;
   }
   return `Nu am citit ${list}. Ține buletinul drept în cadru, cu numele și CNP-ul vizibile (la CI-ul vechi și rândurile de jos), și încearcă din nou.`;
 }

@@ -1461,6 +1461,16 @@ canvas#signature-canvas {
   stroke: #e20074;
 }
 
+.ci-id-art .ci-id-art-cnp {
+  fill: rgba(226, 0, 116, 0.16);
+  stroke: #e20074;
+}
+
+.ci-id-art .ci-id-art-mrz {
+  stroke: #e20074;
+  stroke-width: 2.5;
+}
+
 .ci-drop-hint {
   margin: 0;
   font-size: 0.92rem;
@@ -2107,7 +2117,8 @@ canvas#signature-canvas {
 }
 
 .ci-cam-ghost-cnp {
-  stroke: rgba(226, 0, 116, 0.7);
+  stroke: rgba(226, 0, 116, 0.85);
+  fill: rgba(226, 0, 116, 0.22);
 }
 
 .ci-cam-ghost-mrz {
@@ -2128,9 +2139,22 @@ canvas#signature-canvas {
 }
 
 .ci-cam-data-tag {
-  top: 22%;
-  right: 8%;
   background: rgba(226, 0, 116, 0.62);
+}
+
+.ci-cam-data-tag-names {
+  top: 18%;
+  right: 8%;
+}
+
+.ci-cam-data-tag-cnp {
+  top: 56%;
+  right: 12%;
+}
+
+.ci-cam-data-tag-old-cnp {
+  top: 12%;
+  right: 20%;
 }
 
 .ci-cam-mrz-tag {

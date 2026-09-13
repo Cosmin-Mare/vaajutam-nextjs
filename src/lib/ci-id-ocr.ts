@@ -17,13 +17,13 @@ const HEADER =
   /\b(?:ROMANIA|ROMÂNIA|ROUMANIE|CARTE DE IDENTITATE|CARTE D['’]?IDENTITE|IDENTITY CARD|IDENTITE)\b/i;
 
 const LABELISH =
-  /\b(?:NUME|PRENUME|SURNAME|GIVEN\s*NAMES?|LAST\s*NAMES?|FIRST\s*NAMES?|NOM|PRENOM|NAMES?)\b/i;
+  /\b(?:NUME|PRENUME|SURNAME|SUMAME|SURNANE|GIVEN\s*NAMES?|LAST\s*NAMES?|FIRST\s*NAMES?|NOM|PRENOM|NAMES?)\b/i;
 
 const STOP =
   /^(?:SEX|SEXE|SEXUL|CETATENIE|NATIONALITY|NATIONALITE|CNP|PIN|DATA|DATE|NASTERE|BIRTH|EXPIR|DOCUMENT|SERIA|SERIES|NR|NO|ROU|M|F|SEMNATURA|SIGNATURE|HOLDER|IDENTITATE|CARTE|CARD|ROMANA|ROMANIAN|ROUMAIN|ROUMAINE)$/i;
 
 const PLACEISH =
-  /\b(?:STR|JUD|MUN|NR|CARD|IDENTITY|CARTE|IDENTITE|SPCLEP|DEJ|CLUJ|BISTR|DOMICILIU|ADRESSE|ADDRESS|ROUMANIE|ROMANIA|VALIDITE|VALIDITY|EMISA|ISSUED|ROMANA|ROMANIAN|ROUMAIN|ROUMAINE|NATIONALITE|NATIONALITY|CETATENIE)\b/i;
+  /\b(?:STR|JUD|MUN|NR|CARD|IDENTITY|CARTE|IDENTITE|SPCLEP|DEJ|CLUJ|BISTR|DOMICILIU|ADRESSE|ADDRESS|ROUMANIE|ROMANIA|VALIDITE|VALIDITY|EMISA|ISSUED|ROMANA|ROMANIAN|ROUMAIN|ROUMAINE|NATIONALITE|NATIONALITY|CETATENIE|EMOTION|EXPIRY|HOLDER|SIGNATURE|DOCUMENT)\b/i;
 
 const BILINGUAL_PREFIX =
   /^(?:SURNAME|GIVEN\s*NAMES?|LAST\s*NAMES?|FIRST\s*NAMES?|NOM|PRENOM)\s+/i;
@@ -242,7 +242,9 @@ function cleanNameCandidate(raw: string): string | null {
   t = tokens.join(t.includes("-") && tokens.length <= 2 ? "-" : " ");
   if (raw.includes("-") && tokens.length === 2) t = `${tokens[0]}-${tokens[1]}`;
   if (!/^[A-ZĂÂÎȘȚ]+(?:[ -][A-ZĂÂÎȘȚ]+)*$/.test(t)) return null;
-  return titleCaseRo(t);
+  const named = titleCaseRo(t);
+  if (isLabelRemnant(named)) return null;
+  return named;
 }
 
 function lineLooksLikeCnp(line: string): boolean {
@@ -274,6 +276,21 @@ function isHarvestStopLine(line: string): boolean {
   return false;
 }
 
+/** Names sit above CNP on the new card, below CNP on the old one. */
+function isNameZoneEnd(line: string, kind?: CiKind): boolean {
+  if (
+    /\b(?:SEX|SEXE|SEXUL|CETATENIE|NATIONALITY|NATIONALITE|HOLDER|SIGNATURE|SEMNATURA)\b/i.test(
+      line
+    )
+  ) {
+    return true;
+  }
+  if (kind === "new" && (/\b(?:CNP|PIN)\b/i.test(line) || lineLooksLikeCnp(line))) {
+    return true;
+  }
+  return isHarvestStopLine(line);
+}
+
 function nameScore(name: string): number {
   const tokens = name.split(/[ -]/).filter(Boolean);
   if (tokens.length > 3) return -20;
@@ -299,8 +316,38 @@ function looksLikeOcrJunk(name: string): boolean {
   return false;
 }
 
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  const m = a.length;
+  const n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  const prev = Array.from({ length: n + 1 }, (_, j) => j);
+  const cur = new Array<number>(n + 1);
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j]! + 1, cur[j - 1]! + 1, prev[j - 1]! + cost);
+    }
+    for (let j = 0; j <= n; j++) prev[j] = cur[j]!;
+  }
+  return prev[n]!;
+}
+
+/** OCR often turns "Surname" into "Sumame", "Surnane", etc. */
+function isLabelRemnant(name: string): boolean {
+  const t = stripDiacritics(name).replace(/[^A-Za-z]/g, "").toUpperCase();
+  if (t.length < 4 || t.length > 12) return false;
+  if (/(?:NAMES?)$/.test(t)) return true;
+  return ["SURNAME", "GIVEN", "PRENOM", "PRENUME", "LASTNAME", "FIRSTNAME", "SUMAME"].some(
+    (label) => levenshtein(t, label) <= 2
+  );
+}
+
 function isAcceptableName(name: string | undefined): name is string {
   if (!name) return false;
+  if (isLabelRemnant(name)) return false;
   if (looksLikeOcrJunk(name)) return false;
   return nameScore(name) >= 4;
 }
@@ -380,12 +427,12 @@ function findAfterLabel(
   return undefined;
 }
 
-function harvestNames(lines: string[]): { nume?: string; prenume?: string } {
+function harvestNames(lines: string[], kind?: CiKind): { nume?: string; prenume?: string } {
   const headerAt = lines.findIndex((l) => HEADER.test(l));
   const from = headerAt >= 0 ? headerAt + 1 : 0;
   let to = lines.length;
   for (let i = from; i < lines.length; i++) {
-    if (isHarvestStopLine(lines[i]!)) {
+    if (isNameZoneEnd(lines[i]!, kind)) {
       to = i;
       break;
     }
@@ -398,7 +445,7 @@ function harvestNames(lines: string[]): { nume?: string; prenume?: string } {
       continue;
     }
     const name = cleanNameCandidate(line);
-    if (!name || looksLikeOcrJunk(name)) continue;
+    if (!name || looksLikeOcrJunk(name) || isLabelRemnant(name)) continue;
     cands.push({ name, index: i, score: nameScore(name) });
   }
   return pickBestNames(cands);
@@ -467,7 +514,7 @@ export function parseRomanianIdText(text: string, kind?: CiKind): CiOcrResult {
     stop: /^(?:SEX|CETATENIE|NATIONALITY|NATIONALITE)\b/i,
     preferGiven: true,
   });
-  const harvested = harvestNames(lines);
+  const harvested = harvestNames(lines, kind);
   const trustMrz = kind !== "new" && mrzNamesTrustworthy(mrz);
 
   if (trustMrz) {
@@ -476,11 +523,11 @@ export function parseRomanianIdText(text: string, kind?: CiKind): CiOcrResult {
     const prenumeOrder =
       kind === "old"
         ? [mrz.prenume, labeledPrenume, harvested.prenume]
-        : [labeledPrenume, harvested.prenume, kind === "new" ? undefined : mrz.prenume];
+        : [labeledPrenume, harvested.prenume, mrz.prenume];
     const numeOrder =
       kind === "old"
         ? [mrz.nume, labeledNume, harvested.nume]
-        : [labeledNume, harvested.nume, kind === "new" ? undefined : mrz.nume];
+        : [labeledNume, harvested.nume, mrz.nume];
     const prenume = firstAcceptable(prenumeOrder);
     const nume = firstAcceptable(numeOrder.filter((n) => !namesEqual(n, prenume)));
     Object.assign(result, finalizeNames(nume, prenume));

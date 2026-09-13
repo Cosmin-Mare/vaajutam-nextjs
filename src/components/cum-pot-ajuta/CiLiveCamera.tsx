@@ -80,9 +80,9 @@ function FrameGhost({ kind }: { kind: CiKind }) {
   if (kind === "old") {
     return (
       <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
-        <rect x="8" y="10" width="52" height="64" rx="6" />
-        <circle cx="34" cy="34" r="12" />
-        <rect x="72" y="16" width="132" height="8" rx="4" />
+        <rect x="8" y="14" width="52" height="70" rx="6" />
+        <circle cx="34" cy="38" r="12" />
+        <rect className="ci-cam-ghost-cnp" x="72" y="16" width="90" height="8" rx="4" />
         <rect x="72" y="32" width="108" height="8" rx="4" />
         <rect x="72" y="48" width="88" height="8" rx="4" />
         <rect className="ci-cam-ghost-mrz" x="8" y="96" width="204" height="7" rx="2" />
@@ -92,12 +92,12 @@ function FrameGhost({ kind }: { kind: CiKind }) {
   }
   return (
     <svg className="ci-cam-ghost" viewBox="0 0 220 138" aria-hidden="true">
-      <rect x="8" y="10" width="52" height="64" rx="6" />
-      <circle cx="34" cy="34" r="12" />
-      <rect className="ci-cam-ghost-cnp" x="72" y="14" width="96" height="8" rx="4" />
-      <rect x="72" y="32" width="132" height="8" rx="4" />
-      <rect x="72" y="48" width="118" height="8" rx="4" />
-      <rect x="72" y="64" width="108" height="8" rx="4" />
+      <rect x="8" y="18" width="52" height="100" rx="6" />
+      <circle cx="34" cy="48" r="12" />
+      <rect x="72" y="20" width="132" height="8" rx="4" />
+      <rect x="72" y="36" width="118" height="8" rx="4" />
+      <rect x="72" y="52" width="72" height="6" rx="3" />
+      <rect className="ci-cam-ghost-cnp" x="72" y="78" width="96" height="8" rx="4" />
     </svg>
   );
 }
@@ -226,21 +226,30 @@ function CameraShell({
           <span className="ci-cam-corner ci-cam-bl" aria-hidden />
           <span className="ci-cam-corner ci-cam-br" aria-hidden />
           <FrameGhost kind={kind} />
-          {kind === "new" ? <span className="ci-cam-data-tag">Nume · CNP</span> : null}
-          {kind === "old" ? <span className="ci-cam-mrz-tag">Rândurile de jos</span> : null}
+          {kind === "new" ? (
+            <>
+              <span className="ci-cam-data-tag ci-cam-data-tag-names">Nume</span>
+              <span className="ci-cam-data-tag ci-cam-data-tag-cnp">CNP</span>
+            </>
+          ) : (
+            <>
+              <span className="ci-cam-data-tag ci-cam-data-tag-old-cnp">CNP</span>
+              <span className="ci-cam-mrz-tag">Rândurile de jos</span>
+            </>
+          )}
         </div>
         <ul className="ci-cam-tips">
           {kind === "old" ? (
             <>
               <li>Fața cu fotografia, tot cardul în dreptunghi</li>
-              <li>Se văd numele, CNP-ul și cele două rânduri de jos</li>
+              <li>CNP-ul sus, numele sub el, cele două rânduri de jos</li>
               <li>Lumină din față, fără reflexii pe plastic</li>
             </>
           ) : (
             <>
               <li>Fața cu fotografia, tot cardul în dreptunghi</li>
-              <li>Numele, prenumele și CNP-ul se citesc în dreapta</li>
-              <li>Fără reflexii pe plastic — nu e nevoie de spate</li>
+              <li>Numele sus în dreapta, CNP-ul mai jos — nu e nevoie de spate</li>
+              <li>Fără reflexii pe plastic</li>
             </>
           )}
           {extraTips}
