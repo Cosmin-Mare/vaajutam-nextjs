@@ -24,12 +24,6 @@ const BUSY_HINTS = [
   "Încă puțin…",
 ];
 
-/** Two real steps: fill data (CI optional) → sign & send. */
-const STEPS = [
-  { id: "f230-date", label: "Date" },
-  { id: "f230-sign", label: "Semnează" },
-] as const;
-
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -66,8 +60,6 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     nume.trim() && prenume.trim() && cnpStatus === "valid" && localitate.trim() && judet.trim()
   );
   const finishDone = identityDone && signed && gdpr;
-  const doneFlags = [identityDone || ciFilled, finishDone];
-  const currentStep = mobileUi ? wizardStep : identityDone ? 1 : 0;
 
   useEffect(() => {
     const sync = () => setMobileUi(prefersForm230MobileUi());
@@ -244,31 +236,6 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
       }
     >
       {variant === "embedded" ? <h2 className="projects-title">Formular 230</h2> : null}
-
-      <ol className="f230-progress f230-progress-2" aria-label="Pașii formularului">
-        {STEPS.map((step, i) => {
-          const done = doneFlags[i];
-          const now = i === currentStep;
-          return (
-            <li key={step.id} className={done ? "is-done" : now ? "is-now" : ""}>
-              <button
-                type="button"
-                className="f230-progress-btn"
-                aria-current={now ? "step" : undefined}
-                onClick={() => {
-                  goStep(i);
-                  if (!prefersForm230MobileUi()) scrollToId(step.id);
-                }}
-              >
-                <span className="f230-progress-n" aria-hidden>
-                  {done ? "✓" : i + 1}
-                </span>
-                <span className="f230-progress-label">{step.label}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
 
       <form
         ref={formRef}
