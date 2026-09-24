@@ -18,6 +18,7 @@ import {
   recognizeCiImage,
 } from "@/lib/ci-recognize";
 import type { CiKind, CiOcrResult } from "@/lib/ci-id-ocr";
+import { preferNativeCiCapture, prefersForm230MobileUi } from "@/lib/form230-mobile";
 
 type Stage = "idle" | "picking" | "reading" | "done" | "partial" | "error";
 
@@ -155,10 +156,27 @@ export function CiUploadCard({
   const [camStream, setCamStream] = useState<MediaStream | null>(null);
   const [camPending, setCamPending] = useState(false);
   const [camGuide, setCamGuide] = useState(false);
-  const showQr = Boolean(sessionId) && !hidePhoneQr;
+  const [isPhoneUi, setIsPhoneUi] = useState(false);
+  const [nativeCapture, setNativeCapture] = useState(false);
+  const showQr = Boolean(sessionId) && !hidePhoneQr && !isPhoneUi;
   const choosingKindFirst = askKindFirst && !kind && (stage === "idle" || stage === "error") && !hasPending;
   const dropzone = !choosingKindFirst && (stage === "idle" || (stage === "error" && !hasPending));
 
+  useEffect(() => {
+    const sync = () => {
+      setIsPhoneUi(prefersForm230MobileUi());
+      setNativeCapture(preferNativeCiCapture());
+    };
+    sync();
+    const mqNarrow = window.matchMedia("(max-width: 720px)");
+    const mqCoarse = window.matchMedia("(pointer: coarse)");
+    mqNarrow.addEventListener("change", sync);
+    mqCoarse.addEventListener("change", sync);
+    return () => {
+      mqNarrow.removeEventListener("change", sync);
+      mqCoarse.removeEventListener("change", sync);
+    };
+  }, []);
   const clearPreview = () => {
     if (previewRef.current) {
       URL.revokeObjectURL(previewRef.current);
@@ -257,9 +275,16 @@ export function CiUploadCard({
     setStage("picking");
   };
 
+  const openNativeCamera = () => {
+    // Direct user gesture → label/input is more reliable than .click() on iOS Safari.
+    cameraRef.current?.click();
+  };
+
   const startCamera = () => {
     setError(null);
-    if (!canUseLiveCamera() || camFailed.current) {
+    // Phones: native OS camera is more reliable than getUserMedia overlays
+    // (permissions, black preview, clipped shutter, iOS quirks).
+    if (nativeCapture || !canUseLiveCamera() || camFailed.current) {
       setCamGuide(true);
       return;
     }
@@ -275,7 +300,6 @@ export function CiUploadCard({
         setCamGuide(true);
       });
   };
-
   const pickKind = (next: CiKind) => {
     setKind(next);
     kindRef.current = next;
@@ -301,14 +325,9 @@ export function CiUploadCard({
     setPaired(false);
   };
 
-  const openNativeCamera = () => {
-    cameraRef.current?.click();
-  };
-
   const retryCamera = () => {
     startCamera();
   };
-
   const flowTitle = choosingKindFirst
     ? "Ce fel de carte de identitate ai?"
     : stage === "picking"
@@ -402,10 +421,11 @@ export function CiUploadCard({
 
       <input
         ref={cameraRef}
+        id="ci-camera-input"
         type="file"
         accept="image/*,.heic,.heif,image/heic,image/heif"
         capture="environment"
-        className="visually-hidden"
+        className="ci-file-input"
         aria-label="Fotografiază CI-ul"
         onChange={(e) => {
           const file = e.currentTarget.files?.[0];
@@ -416,9 +436,10 @@ export function CiUploadCard({
       />
       <input
         ref={galleryRef}
+        id="ci-gallery-input"
         type="file"
         accept="image/*,.heic,.heif,image/heic,image/heif"
-        className="visually-hidden"
+        className="ci-file-input"
         aria-label="Alege o poză cu CI-ul"
         onChange={(e) => {
           const file = e.currentTarget.files?.[0];
@@ -494,35 +515,24 @@ export function CiUploadCard({
                 </ul>
               </button>
             )}
-            <div className="ci-drop-actions">
-              {showQr ? (
+            <div className={"ci-drop-actions" + (isPhoneUi ? " ci-drop-actions-stack" : "")}>
+              {/* On phone: camera first. On desktop with QR: gallery first (phone does the photo). */}
+              {isPhoneUi || !showQr ? (
                 <>
-                  <button
-                    type="button"
-                    className="btn btn-primary-pink-round ci-drop-primary"
-                    onClick={() => galleryRef.current?.click()}
-                  >
-                    Alege o poză
-                  </button>
-                  <button type="button" className="btn btn-secondary-pink" onClick={retryCamera}>
+                  <label htmlFor="ci-camera-input" className="btn btn-primary-pink-round ci-drop-primary">
                     Fotografiază
-                  </button>
+                  </label>
+                  <label htmlFor="ci-gallery-input" className="btn btn-secondary-pink">
+                    Alege din galerie
+                  </label>
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    className="btn btn-primary-pink-round ci-drop-primary"
-                    onClick={retryCamera}
-                  >
+                  <label htmlFor="ci-gallery-input" className="btn btn-primary-pink-round ci-drop-primary">
+                    Alege o poză
+                  </label>
+                  <button type="button" className="btn btn-secondary-pink" onClick={retryCamera}>
                     Fotografiază
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary-pink"
-                    onClick={() => galleryRef.current?.click()}
-                  >
-                    Alege din galerie
                   </button>
                 </>
               )}
@@ -535,7 +545,6 @@ export function CiUploadCard({
           ) : null}
         </div>
       ) : null}
-
       {stage === "reading" && preview ? (
         <div className="ci-preview ci-preview-live" aria-live="polite">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -650,7 +659,18 @@ export function CiUploadCard({
         </div>
       ) : null}
 
-      {camGuide ? <CiCameraGuide kind={kind} onShoot={openNativeCamera} onClose={() => setCamGuide(false)} /> : null}
+      {camGuide ? (
+        <CiCameraGuide
+          kind={kind}
+          preferNative={nativeCapture || camFailed.current || !canUseLiveCamera()}
+          onShoot={() => {
+            setCamGuide(false);
+            // Keep this in the same turn as the tap so iOS allows the file picker.
+            openNativeCamera();
+          }}
+          onClose={() => setCamGuide(false)}
+        />
+      ) : null}
 
       {camStream ? (
         <CiLiveCamera

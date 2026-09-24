@@ -1194,6 +1194,22 @@ canvas#signature-canvas {
   border: 0;
 }
 
+/* iOS-safe file input: keep it in the tree for <label for>, avoid 1×1 clip which
+   often blocks programmatic / label activation on Safari. */
+.ci-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+}
+
 .page-230-hero,
 .page-230-privacy {
   max-width: 40rem;
@@ -1609,7 +1625,28 @@ canvas#signature-canvas {
 
 .ci-drop-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
   justify-content: center;
+  align-items: stretch;
+}
+
+.ci-drop-actions-stack {
+  flex-direction: column;
+  width: 100%;
+  max-width: 18rem;
+}
+
+.ci-drop-actions .btn,
+.ci-drop-actions label.btn {
+  margin: 0;
+  cursor: pointer;
+  text-align: center;
+}
+
+.ci-drop-actions-stack .btn,
+.ci-drop-actions-stack label.btn {
+  width: 100%;
 }
 
 .ci-card-phone .ci-drop-hint-desktop,
@@ -2119,6 +2156,16 @@ canvas#signature-canvas {
   color: #fff;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  box-sizing: border-box;
+}
+
+.ci-cam-guide {
+  background: linear-gradient(180deg, #1a1d21 0%, #0b0d0f 55%);
 }
 
 .ci-cam-pending {
@@ -2152,13 +2199,16 @@ canvas#signature-canvas {
 .ci-cam-stage {
   position: relative;
   z-index: 2;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.85rem;
-  padding: 4.5rem 1rem 7.5rem;
+  padding: 1.25rem 1rem 1rem;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ci-cam-title {
@@ -2298,16 +2348,23 @@ canvas#signature-canvas {
 }
 
 .ci-cam-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
+  flex: 0 0 auto;
   z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.9rem 1.2rem max(1.2rem, env(safe-area-inset-bottom)) max(1.2rem, env(safe-area-inset-left));
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.7));
+  gap: 0.75rem;
+  padding: 0.9rem 1.2rem max(1.2rem, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72));
+}
+
+.ci-cam-native-btn {
+  flex: 1 1 auto;
+  max-width: 16rem;
+  min-height: 3rem;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .ci-cam-cancel {
@@ -2404,11 +2461,20 @@ canvas#signature-canvas {
 .signature-wrap {
   position: relative;
   width: 100%;
+  min-height: 200px;
   background: #f8f9fa;
   border: 1px dashed #ced4da;
   border-radius: 0.5rem;
   touch-action: none;
   overscroll-behavior: contain;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media (min-width: 520px) {
+  .signature-wrap {
+    min-height: 168px;
+  }
 }
 
 .signature-wrap-invalid {
@@ -2567,6 +2633,73 @@ canvas#signature-canvas {
   border: 1px solid #eee;
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(33, 37, 41, 0.05);
+}
+
+.f230-step-nav {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: stretch;
+  margin-top: 1.1rem;
+}
+
+.f230-step-nav .btn {
+  flex: 1 1 8rem;
+  min-height: 3rem;
+}
+
+/* Submit row stays visible on desktop; only the Înapoi control is mobile-only. */
+.f230-step-nav-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.f230-mobile-only {
+  display: none !important;
+}
+
+.f230-mobile-wizard .f230-progress {
+  top: 3.6rem;
+}
+
+@media (max-width: 720px) {
+  .ci-phone-panel {
+    display: none !important;
+  }
+
+  .ci-card-split-qr {
+    display: block;
+  }
+
+  .f230-progress-label {
+    font-size: 0.72rem;
+  }
+
+  .signature-wrap canvas {
+    min-height: 200px;
+  }
+
+  .f230-step-nav {
+    display: flex;
+  }
+
+  .f230-mobile-only {
+    display: inline-flex !important;
+  }
+
+  /* One panel at a time on phones — avoids a mile of scroll and clipped controls. */
+  .f230[data-step] > .f230-form > [data-f230-panel] {
+    display: none !important;
+  }
+
+  .f230[data-step="0"] > .f230-form > [data-f230-panel="0"],
+  .f230[data-step="1"] > .f230-form > [data-f230-panel="1"],
+  .f230[data-step="2"] > .f230-form > [data-f230-panel="2"],
+  .f230[data-step="3"] > .f230-form > [data-f230-panel="3"] {
+    display: block !important;
+  }
 }
 
 .f230-progress li {

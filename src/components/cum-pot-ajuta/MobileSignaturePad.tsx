@@ -21,6 +21,7 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const padRef = useRef<SignaturePad | null>(null);
+  const drawingRef = useRef(false);
   const [blank, setBlank] = useState(true);
 
   useEffect(() => {
@@ -28,44 +29,74 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
 
+    const narrow = wrap.clientWidth < 520;
     const pad = new SignaturePad(canvas, {
       backgroundColor: "rgb(248, 249, 250)",
       penColor: "rgb(20, 20, 20)",
-      minWidth: 1.2,
-      maxWidth: 2.8,
+      // Fingers need a thicker stroke than a mouse; thin pens look like dots on phones.
+      minWidth: narrow ? 1.8 : 1.2,
+      maxWidth: narrow ? 3.6 : 2.8,
+      minDistance: 2,
+      velocityFilterWeight: 0.7,
     });
     padRef.current = pad;
 
     const syncBlank = () => setBlank(pad.isEmpty());
-    pad.addEventListener("beginStroke", () => setBlank(false));
-    pad.addEventListener("endStroke", syncBlank);
+    const onBegin = () => {
+      drawingRef.current = true;
+      setBlank(false);
+    };
+    const onEnd = () => {
+      drawingRef.current = false;
+      syncBlank();
+    };
+    pad.addEventListener("beginStroke", onBegin);
+    pad.addEventListener("endStroke", onEnd);
 
-    const resize = () => {
+    let lastW = 0;
+    let lastH = 0;
+    let resizeTimer = 0;
+
+    const resizeNow = () => {
+      if (drawingRef.current) return;
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const width = wrap.clientWidth;
-      const height = width < 520 ? 148 : 168;
+      const width = Math.max(1, Math.floor(wrap.clientWidth));
+      const height = width < 520 ? 200 : 168;
+      if (width === lastW && height === lastH && canvas.width) return;
+      lastW = width;
+      lastH = height;
       const data = pad.toData();
+      // Match official Signature Pad DPI handling: size from layout box, then scale ctx.
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       canvas.width = Math.floor(width * ratio);
       canvas.height = Math.floor(height * ratio);
       const ctx = canvas.getContext("2d");
-      if (ctx) ctx.scale(ratio, ratio);
+      if (ctx) ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       pad.clear();
       if (data.length) pad.fromData(data);
       syncBlank();
     };
 
-    resize();
-    const ro = new ResizeObserver(() => resize());
+    const scheduleResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(resizeNow, 80);
+    };
+
+    resizeNow();
+    const ro = new ResizeObserver(scheduleResize);
     ro.observe(wrap);
+    window.addEventListener("orientationchange", scheduleResize);
+    window.addEventListener("resize", scheduleResize);
     return () => {
+      window.clearTimeout(resizeTimer);
+      window.removeEventListener("orientationchange", scheduleResize);
+      window.removeEventListener("resize", scheduleResize);
       ro.disconnect();
       pad.off();
       padRef.current = null;
     };
   }, []);
-
   useEffect(() => {
     onSignedChange?.(!blank);
   }, [blank, onSignedChange]);

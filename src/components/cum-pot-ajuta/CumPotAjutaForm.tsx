@@ -11,6 +11,7 @@ import type { CiOcrResult } from "@/lib/ci-id-ocr";
 import { clearCiOcrLocal, readCiOcrLocal } from "@/lib/ci-ocr-local";
 import { newCiSessionId } from "@/lib/ci-session-id";
 import { cnpFieldStatus, normalizeCnp } from "@/lib/cnp";
+import { prefersForm230MobileUi } from "@/lib/form230-mobile";
 
 type Props = {
   variant?: "embedded" | "standalone";
@@ -58,6 +59,8 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
   const [ciSessionId, setCiSessionId] = useState("");
   const [filledFlash, setFilledFlash] = useState({ nume: false, prenume: false, cnp: false });
   const [shake, setShake] = useState(false);
+  const [mobileUi, setMobileUi] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
   const cnpStatus = cnpFieldStatus(cnp);
   const cnpBlocked = cnpStatus === "invalid";
   const identityDone = Boolean(
@@ -68,7 +71,39 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
   );
   const sendReady = identityDone && signed && gdpr;
   const doneFlags = [ciFilled, identityDone, signed, sendReady];
-  const currentStep = !identityDone ? (startedIdentity || ciFilled ? 1 : 0) : !signed ? 2 : 3;
+  // On phone, the progress mirror follows the wizard; on desktop it follows completion.
+  const currentStep = mobileUi
+    ? wizardStep
+    : !identityDone
+      ? startedIdentity || ciFilled
+        ? 1
+        : 0
+      : !signed
+        ? 2
+        : 3;
+
+  useEffect(() => {
+    const sync = () => setMobileUi(prefersForm230MobileUi());
+    sync();
+    const mq = window.matchMedia("(max-width: 720px)");
+    const mq2 = window.matchMedia("(pointer: coarse)");
+    mq.addEventListener("change", sync);
+    mq2.addEventListener("change", sync);
+    return () => {
+      mq.removeEventListener("change", sync);
+      mq2.removeEventListener("change", sync);
+    };
+  }, []);
+
+  const goStep = useCallback((step: number) => {
+    const next = Math.max(0, Math.min(3, step));
+    setWizardStep(next);
+    window.setTimeout(() => {
+      scrollToId("formular-230");
+      // Signature canvas is display:none on other steps — force a layout pass when shown.
+      window.dispatchEvent(new Event("resize"));
+    }, 50);
+  }, []);
 
   const checkCnpDuplicate = useCallback(async (value: string) => {
     if (cnpFieldStatus(value) !== "valid") return;
@@ -110,9 +145,12 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
       if (data.nume || data.prenume || data.cnp) setCiFilled(true);
       setFilledFlash(flash);
       window.setTimeout(() => setFilledFlash({ nume: false, prenume: false, cnp: false }), 1600);
-      window.setTimeout(() => scrollToId("f230-date"), 450);
+      window.setTimeout(() => {
+        goStep(1);
+        if (!prefersForm230MobileUi()) scrollToId("f230-date");
+      }, 450);
     },
-    [checkCnpDuplicate]
+    [checkCnpDuplicate, goStep]
   );
 
   useEffect(() => {
@@ -169,6 +207,27 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     if (next) setSemnaturaInvalida(false);
   }, []);
 
+  const continueFromCi = () => goStep(1);
+
+  const continueFromDate = () => {
+    if (!identityDone) {
+      formRef.current?.classList.add("was-validated");
+      failValidation();
+      return;
+    }
+    goStep(2);
+  };
+
+  const continueFromSign = () => {
+    const pad = padRef.current;
+    if (!pad || pad.isEmpty()) {
+      setSemnaturaInvalida(true);
+      failValidation();
+      return;
+    }
+    goStep(3);
+  };
+
   if (pdfDataUrl) {
     return (
       <section id="formular-pdf" className="f230-done" tabIndex={-1} aria-live="polite">
@@ -206,7 +265,12 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
   return (
     <section
       id="formular-230"
-      className={"f230" + (variant === "standalone" ? " formular-230-standalone" : "")}
+      data-step={wizardStep}
+      className={
+        "f230" +
+        (variant === "standalone" ? " formular-230-standalone" : "") +
+        (mobileUi ? " f230-mobile-wizard" : "")
+      }
     >
       {variant === "embedded" ? <h2 className="projects-title">Formular 230</h2> : null}
 
@@ -220,7 +284,11 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 type="button"
                 className="f230-progress-btn"
                 aria-current={now ? "step" : undefined}
-                onClick={() => scrollToId(step.id)}
+                onClick={() => {
+                  goStep(i);
+                  // Desktop keeps all panels visible — scroll to the section.
+                  if (!prefersForm230MobileUi()) scrollToId(step.id);
+                }}
               >
                 <span className="f230-progress-n" aria-hidden>
                   {done ? "✓" : i + 1}
@@ -256,6 +324,15 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           setSemnaturaInvalida(nextSigInvalid);
           if (nextGdprInvalid || nextSigInvalid || cnpBad || !form.checkValidity()) {
             form.classList.add("was-validated");
+            if (mobileUi || prefersForm230MobileUi()) {
+              if (cnpBad || !nume.trim() || !prenume.trim() || !localitate.trim() || !judet.trim()) {
+                goStep(1);
+              } else if (nextSigInvalid) {
+                goStep(2);
+              } else {
+                goStep(3);
+              }
+            }
             failValidation();
             return;
           }
@@ -276,7 +353,8 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
             if (!res.ok) {
               if (j.error === "duplicate") {
                 setCnpDuplicate(true);
-                scrollToId("f230-date");
+                goStep(1);
+                if (!prefersForm230MobileUi()) scrollToId("f230-date");
                 return;
               }
               if (j.error === "cnp") setCnpDuplicate(false);
@@ -300,11 +378,20 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
         }}
         noValidate
       >
-        <div id="f230-ci" className={"col-12 f230-ci-slot" + (ciFilled ? " is-done" : "")}>
+        <div id="f230-ci" className={"col-12 f230-ci-slot" + (ciFilled ? " is-done" : "")} data-f230-panel="0">
           <CiUploadCard sessionId={ciSessionId} onExtracted={applyOcr} />
+          <div className="f230-step-nav">
+            <button type="button" className="btn btn-primary-pink-round" onClick={continueFromCi}>
+              {ciFilled ? "Continuă la date" : "Continuă fără poză"}
+            </button>
+          </div>
         </div>
 
-        <div id="f230-date" className={"col-12 f230-panel" + (identityDone ? " f230-panel-ok" : "")}>
+        <div
+          id="f230-date"
+          className={"col-12 f230-panel" + (identityDone ? " f230-panel-ok" : "")}
+          data-f230-panel="1"
+        >
           <p className="f230-panel-kicker">{identityDone ? "Completat" : "Pasul 2"}</p>
           <h3 className="f230-panel-title">Datele tale</h3>
           <p className="f230-panel-help">Verifică-le, chiar dacă au venit de pe CI.</p>
@@ -427,16 +514,40 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               <div className="invalid-feedback">Completează câmpul cu județul tău.</div>
             </div>
           </div>
+          <div className="f230-step-nav">
+            <button type="button" className="btn btn-secondary-pink" onClick={() => goStep(0)}>
+              Înapoi
+            </button>
+            <button type="button" className="btn btn-primary-pink-round" onClick={continueFromDate}>
+              Continuă la semnătură
+            </button>
+          </div>
         </div>
 
-        <div id="f230-sign" className={"col-12 f230-panel" + (signed ? " f230-panel-ok" : "")}>
+        <div
+          id="f230-sign"
+          className={"col-12 f230-panel" + (signed ? " f230-panel-ok" : "")}
+          data-f230-panel="2"
+        >
           <p className="f230-panel-kicker">{signed ? "Completat" : "Pasul 3"}</p>
           <h3 className="f230-panel-title">Semnează</h3>
           <p className="f230-panel-help">Ca pe hârtie, în chenar. O poți șterge și o iei de la capăt.</p>
           <MobileSignaturePad ref={padRef} invalid={semnaturaInvalida} onSignedChange={onSignedChange} />
+          <div className="f230-step-nav">
+            <button type="button" className="btn btn-secondary-pink" onClick={() => goStep(1)}>
+              Înapoi
+            </button>
+            <button type="button" className="btn btn-primary-pink-round" onClick={continueFromSign}>
+              Continuă
+            </button>
+          </div>
         </div>
 
-        <div id="f230-send" className={"col-12 f230-panel" + (sendReady ? " f230-panel-ok" : "")}>
+        <div
+          id="f230-send"
+          className={"col-12 f230-panel" + (sendReady ? " f230-panel-ok" : "")}
+          data-f230-panel="3"
+        >
           <p className="f230-panel-kicker">{sendReady ? "Gata de trimis" : "Pasul 4"}</p>
           <h3 className="f230-panel-title">Confirmă și trimite</h3>
           <fieldset className="col-12 pb-2 duration-fieldset">
@@ -510,7 +621,10 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               {submitError}
             </p>
           ) : null}
-          <div className="col-12 pb-2 submit-button-wrapper">
+          <div className="col-12 pb-2 submit-button-wrapper f230-step-nav f230-step-nav-submit">
+            <button type="button" className="btn btn-secondary-pink f230-mobile-only" onClick={() => goStep(2)}>
+              Înapoi
+            </button>
             <button
               type="submit"
               className="btn btn-primary-pink-round submit-button"
