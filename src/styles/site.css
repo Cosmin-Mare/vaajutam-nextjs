@@ -2434,7 +2434,6 @@ canvas#signature-canvas {
   .ci-scan-frame,
   .ci-cam-flash,
   .f230-panel,
-  .f230-progress-n,
   .f230-done,
   .f230-done-mark,
   .f230-shake,
@@ -2634,29 +2633,6 @@ canvas#signature-canvas {
   }
 }
 
-.f230-progress {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem;
-  margin: 0 0 1.1rem;
-  padding: 0.45rem 0.4rem;
-  font-size: 0.85rem;
-  position: sticky;
-  top: 4.5rem;
-  z-index: 20;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 1rem;
-  box-shadow: 0 8px 24px rgba(33, 37, 41, 0.05);
-}
-
-.f230-progress-2 {
-  max-width: 22rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .f230-ci-inline {
   margin: 0 0 1.15rem;
 }
@@ -2668,26 +2644,25 @@ canvas#signature-canvas {
 .f230-date-stack {
   display: flex;
   flex-direction: column;
+  gap: 0.15rem;
 }
 
 .f230-date-stack .f230-step-nav {
   margin-top: 0.85rem;
 }
 
-@media (max-width: 720px) {
-  /* Fields first on phone; optional CI after — less friction to start typing. */
-  .f230-date-stack .f230-fields {
-    order: 1;
-  }
+.f230-fields-block {
+  margin-top: 0.35rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid #eee;
+}
 
-  .f230-date-stack .f230-ci-inline {
-    order: 2;
-    margin: 1rem 0 0.25rem;
-  }
-
-  .f230-date-stack .f230-step-nav {
-    order: 3;
-  }
+.f230-fields-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.25;
 }
 
 .f230-next-btn {
@@ -2758,10 +2733,6 @@ canvas#signature-canvas {
   display: none !important;
 }
 
-.f230-mobile-wizard .f230-progress {
-  top: 3.6rem;
-}
-
 @media (max-width: 720px) {
   .ci-phone-panel {
     display: none !important;
@@ -2769,10 +2740,6 @@ canvas#signature-canvas {
 
   .ci-card-split-qr {
     display: block;
-  }
-
-  .f230-progress-label {
-    font-size: 0.72rem;
   }
 
   .signature-wrap {
@@ -2815,102 +2782,18 @@ canvas#signature-canvas {
   }
 }
 
-.f230-progress li {
-  min-width: 0;
-}
-
-.f230-progress-btn {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.28rem;
-  border: 0;
-  background: transparent;
-  padding: 0.35rem 0.15rem;
-  color: #6c757d;
-  font: inherit;
-  font-weight: 650;
-  cursor: pointer;
-  border-radius: 0.7rem;
-}
-
-.f230-progress-btn:hover,
-.f230-progress-btn:focus-visible {
-  color: #e20074;
-  outline: none;
-  background: rgba(226, 0, 116, 0.06);
-}
-
-.f230-progress-n {
-  width: 1.55rem;
-  height: 1.55rem;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f3f5;
-  color: #495057;
-  font-size: 0.78rem;
-  font-weight: 700;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.f230-progress-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.15;
-  text-align: center;
-}
-
-.f230-progress-opt {
-  font-size: 0.64rem;
-  font-weight: 500;
-  color: #adb5bd;
-}
-
-.f230-progress li.is-now .f230-progress-n {
-  background: #e20074;
-  color: #fff;
-  animation: f230-now 1.6s ease-in-out infinite;
-}
-
-.f230-progress li.is-now .f230-progress-btn {
-  color: #e20074;
-}
-
-.f230-progress li.is-done .f230-progress-n {
-  background: #0f766e;
-  color: #fff;
-}
-
-.f230-progress li.is-done .f230-progress-btn {
-  color: #0f766e;
-}
-
-@keyframes f230-now {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
-}
-
 .f230-form {
   position: relative;
 }
 
 .f230-ci-slot {
-  scroll-margin-top: 10.5rem;
+  scroll-margin-top: 5.5rem;
   margin-bottom: 0.85rem;
   animation: f230-in 0.45s ease both;
 }
 
 .f230-panel {
-  scroll-margin-top: 10.5rem;
+  scroll-margin-top: 5.5rem;
   margin-bottom: 0.85rem;
   padding: 1.1rem 1.15rem 1.2rem;
   background: #fff;
@@ -3168,10 +3051,6 @@ canvas#signature-canvas {
 @media (max-width: 700px) {
   .f230-choice {
     grid-template-columns: 1fr;
-  }
-
-  .f230-progress-opt {
-    display: none;
   }
 
   .f230-done-actions .btn {

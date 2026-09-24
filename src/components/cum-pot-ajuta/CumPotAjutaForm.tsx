@@ -24,12 +24,6 @@ const BUSY_HINTS = [
   "Încă puțin…",
 ];
 
-/** Two real steps: fill data (CI optional) → sign & send. */
-const STEPS = [
-  { id: "f230-date", label: "Date" },
-  { id: "f230-sign", label: "Semnează" },
-] as const;
-
 function scrollToId(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -66,8 +60,6 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     nume.trim() && prenume.trim() && cnpStatus === "valid" && localitate.trim() && judet.trim()
   );
   const finishDone = identityDone && signed && gdpr;
-  const doneFlags = [identityDone || ciFilled, finishDone];
-  const currentStep = mobileUi ? wizardStep : identityDone ? 1 : 0;
 
   useEffect(() => {
     const sync = () => setMobileUi(prefersForm230MobileUi());
@@ -245,31 +237,6 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     >
       {variant === "embedded" ? <h2 className="projects-title">Formular 230</h2> : null}
 
-      <ol className="f230-progress f230-progress-2" aria-label="Pașii formularului">
-        {STEPS.map((step, i) => {
-          const done = doneFlags[i];
-          const now = i === currentStep;
-          return (
-            <li key={step.id} className={done ? "is-done" : now ? "is-now" : ""}>
-              <button
-                type="button"
-                className="f230-progress-btn"
-                aria-current={now ? "step" : undefined}
-                onClick={() => {
-                  goStep(i);
-                  if (!prefersForm230MobileUi()) scrollToId(step.id);
-                }}
-              >
-                <span className="f230-progress-n" aria-hidden>
-                  {done ? "✓" : i + 1}
-                </span>
-                <span className="f230-progress-label">{step.label}</span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-
       <form
         ref={formRef}
         method="post"
@@ -354,13 +321,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           }
           data-f230-panel="0"
         >
-          <p className="f230-panel-kicker">{identityDone ? "Completat" : "Pasul 1 din 2"}</p>
           <h3 className="f230-panel-title">Datele tale</h3>
-          <p className="f230-panel-help">
-            {ciFilled
-              ? "Verifică datele preluate de pe CI, apoi continuă."
-              : "Completează câmpurile de mai jos."}
-          </p>
 
           <div className="f230-date-stack">
             <div className="f230-ci-inline">
@@ -368,12 +329,22 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 sessionId={ciSessionId}
                 onExtracted={applyOcr}
                 compact={mobileUi}
-                kicker="Opțional"
-                title="Mai rapid cu poza CI"
+                kicker=""
+                title="Poza CI (opțional)"
+                help={
+                  <>
+                    Citim numele și CNP-ul pe dispozitivul tău și completăm câmpurile de mai jos.{" "}
+                    <strong>Poza nu se trimite.</strong>
+                  </>
+                }
               />
             </div>
 
-            <div className="row f230-fields">
+            <div className="f230-fields-block">
+              <h4 className="f230-fields-title">
+                {ciFilled ? "Verifică datele" : "Verifică / completează datele"}
+              </h4>
+              <div className="row f230-fields">
               <div className="col-12 col-sm-6 pb-2">
                 <label htmlFor="nume" className="form-label">
                   Nume(*)
@@ -497,6 +468,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 <div className="invalid-feedback">Completează câmpul cu județul tău.</div>
               </div>
             </div>
+            </div>
 
             <div className="f230-step-nav">
               <button
@@ -519,7 +491,6 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           }
           data-f230-panel="1"
         >
-          <p className="f230-panel-kicker">{finishDone ? "Gata de trimis" : "Pasul 2 din 2"}</p>
           <h3 className="f230-panel-title">Semnează și trimite</h3>
           <p className="f230-panel-help">Semnează cu degetul, bifează acordul, apoi apasă Trimite.</p>
 
