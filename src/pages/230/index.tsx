@@ -22,12 +22,6 @@ export default function Formular230Page() {
         <p className="page-230-cif">
           Beneficiar: {FORM230_ORG.nameDisplay} · CIF {FORM230_ORG.cui}
         </p>
-        <p className="page-230-flowline">
-          Date
-          <span aria-hidden="true">→</span>
-          Semnează &amp; trimite
-          <em className="page-230-flow-opt"> · poza CI opțională</em>
-        </p>
       </section>
       <CumPotAjutaForm variant="standalone" />
     </>
