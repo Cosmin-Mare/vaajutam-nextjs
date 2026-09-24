@@ -25,9 +25,7 @@ export default function Formular230Page() {
         <p className="page-230-flowline">
           Date
           <span aria-hidden="true">→</span>
-          Semnează
-          <span aria-hidden="true">→</span>
-          Trimite
+          Semnează &amp; trimite
           <em className="page-230-flow-opt"> · poza CI opțională</em>
         </p>
       </section>
