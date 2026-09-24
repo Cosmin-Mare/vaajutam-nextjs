@@ -2657,32 +2657,12 @@ canvas#signature-canvas {
   border-top: 1px solid #eee;
 }
 
-.f230-fields-head {
-  margin: 0 0 0.85rem;
-}
-
-.f230-fields-kicker {
-  margin: 0 0 0.2rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #e20074;
-}
-
 .f230-fields-title {
-  margin: 0 0 0.25rem;
-  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #212529;
   line-height: 1.25;
-}
-
-.f230-fields-help {
-  margin: 0;
-  font-size: 0.92rem;
-  color: #6c757d;
-  line-height: 1.4;
 }
 
 .f230-next-btn {

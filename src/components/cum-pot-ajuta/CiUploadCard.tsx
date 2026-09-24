@@ -413,7 +413,7 @@ export function CiUploadCard({
       ) : null}
 
       <div className="ci-card-head">
-        <p className="ci-card-kicker">{kicker}</p>
+        {kicker ? <p className="ci-card-kicker">{kicker}</p> : null}
         <p className="ci-card-title">{useCompact && dropzone ? title : flowTitle}</p>
         <p className="ci-card-help">{flowHelp}</p>
       </div>
