@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { CiKind } from "@/lib/ci-id-ocr";
 
 type LiveProps = {
@@ -14,6 +15,8 @@ type GuideProps = {
   kind?: CiKind;
   onShoot: () => void;
   onClose: () => void;
+  /** Prefer a clear CTA over an empty black “viewfinder”. */
+  preferNative?: boolean;
 };
 
 /** Live preview needs HTTPS (or localhost). Phone QR over http://192.168… cannot use getUserMedia. */
@@ -201,17 +204,24 @@ function CameraShell({
   onClose,
   onSnap,
   snapDisabled,
+  snapLabel,
   extraTips,
   children,
+  mode,
 }: {
   kind?: CiKind;
   onClose: () => void;
   onSnap: () => void;
   snapDisabled?: boolean;
+  snapLabel?: string;
   extraTips?: ReactNode;
   children?: ReactNode;
+  mode?: "live" | "guide";
 }) {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
@@ -224,12 +234,23 @@ function CameraShell({
     };
   }, [onClose]);
 
-  return (
-    <div className="ci-cam" role="dialog" aria-modal="true" aria-labelledby="ci-cam-title">
+  if (!mounted || typeof document === "undefined") return null;
+
+  const shell = (
+    <div
+      className={"ci-cam" + (mode === "guide" ? " ci-cam-guide" : "")}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ci-cam-title"
+    >
       {children}
       <div className="ci-cam-stage">
         <p id="ci-cam-title" className="ci-cam-title">
-          {kind === "old" ? "Așază buletinul vechi în cadru" : kind === "new" ? "Așază CI-ul nou în cadru" : "Așază buletinul în cadru"}
+          {kind === "old"
+            ? "Așază buletinul vechi în cadru"
+            : kind === "new"
+              ? "Așază CI-ul nou în cadru"
+              : "Așază buletinul în cadru"}
         </p>
         <div className="ci-cam-frame">
           <span className="ci-cam-corner ci-cam-tl" aria-hidden />
@@ -275,26 +296,42 @@ function CameraShell({
         <button type="button" className="ci-cam-cancel" onClick={onClose}>
           Anulează
         </button>
-        <button
-          type="button"
-          className="ci-cam-shutter"
-          disabled={snapDisabled}
-          onClick={onSnap}
-          aria-label="Fotografiază"
-        />
+        {mode === "guide" ? (
+          <button type="button" className="btn btn-primary-pink-round ci-cam-native-btn" onClick={onSnap}>
+            {snapLabel || "Deschide camera"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="ci-cam-shutter"
+            disabled={snapDisabled}
+            onClick={onSnap}
+            aria-label={snapLabel || "Fotografiază"}
+          />
+        )}
         <span className="ci-cam-bar-spacer" aria-hidden />
       </div>
     </div>
   );
+
+  return createPortal(shell, document.body);
 }
 
-export function CiCameraGuide({ kind, onShoot, onClose }: GuideProps) {
+export function CiCameraGuide({ kind, onShoot, onClose, preferNative }: GuideProps) {
   return (
     <CameraShell
       kind={kind}
+      mode="guide"
       onClose={onClose}
       onSnap={onShoot}
-      extraTips={<li>Apoi potrivește buletinul ca în dreptunghiul alb</li>}
+      snapLabel={preferNative ? "Deschide camera telefonului" : "Fotografiază"}
+      extraTips={
+        preferNative ? (
+          <li>Se deschide camera telefonului — potrivește buletinul și fotografiază</li>
+        ) : (
+          <li>Apoi potrivește buletinul ca în dreptunghiul alb</li>
+        )
+      }
     />
   );
 }
@@ -349,7 +386,13 @@ export function CiLiveCamera({ stream, kind, onCapture, onClose }: LiveProps) {
   };
 
   return (
-    <CameraShell kind={kind} onClose={onClose} onSnap={() => void snap()} snapDisabled={!ready || busy}>
+    <CameraShell
+      kind={kind}
+      mode="live"
+      onClose={onClose}
+      onSnap={() => void snap()}
+      snapDisabled={!ready || busy}
+    >
       <video
         ref={videoRef}
         className="ci-cam-video"
