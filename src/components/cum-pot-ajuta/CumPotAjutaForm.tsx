@@ -24,11 +24,10 @@ const BUSY_HINTS = [
   "Încă puțin…",
 ];
 
+/** Two real steps: fill data (CI optional) → sign & send. */
 const STEPS = [
-  { id: "f230-ci", label: "Poză", optional: true },
-  { id: "f230-date", label: "Date", optional: false },
-  { id: "f230-sign", label: "Semnătură", optional: false },
-  { id: "f230-send", label: "Trimite", optional: false },
+  { id: "f230-date", label: "Date" },
+  { id: "f230-sign", label: "Semnează" },
 ] as const;
 
 function scrollToId(id: string) {
@@ -66,34 +65,20 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
   const identityDone = Boolean(
     nume.trim() && prenume.trim() && cnpStatus === "valid" && localitate.trim() && judet.trim()
   );
-  const startedIdentity = Boolean(
-    nume.trim() || prenume.trim() || cnp.trim() || localitate.trim() || judet.trim()
-  );
-  const sendReady = identityDone && signed && gdpr;
-  const doneFlags = [ciFilled, identityDone, signed, sendReady];
-  // On phone, the progress mirror follows the wizard; on desktop it follows completion.
-  const currentStep = mobileUi
-    ? wizardStep
-    : !identityDone
-      ? startedIdentity || ciFilled
-        ? 1
-        : 0
-      : !signed
-        ? 2
-        : 3;
+  const finishDone = identityDone && signed && gdpr;
+  const doneFlags = [identityDone || ciFilled, finishDone];
+  const currentStep = mobileUi ? wizardStep : identityDone ? 1 : 0;
 
   useEffect(() => {
     const sync = () => setMobileUi(prefersForm230MobileUi());
     sync();
     const mq = window.matchMedia("(max-width: 720px)");
     mq.addEventListener("change", sync);
-    return () => {
-      mq.removeEventListener("change", sync);
-    };
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
   const goStep = useCallback((step: number) => {
-    const next = Math.max(0, Math.min(3, step));
+    const next = Math.max(0, Math.min(1, step));
     setWizardStep(next);
     window.setTimeout(() => {
       scrollToId("formular-230");
@@ -142,10 +127,11 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
       if (data.nume || data.prenume || data.cnp) setCiFilled(true);
       setFilledFlash(flash);
       window.setTimeout(() => setFilledFlash({ nume: false, prenume: false, cnp: false }), 1600);
+      goStep(0);
       window.setTimeout(() => {
-        goStep(1);
         if (!prefersForm230MobileUi()) scrollToId("f230-date");
-      }, 450);
+        else document.getElementById("nume")?.focus();
+      }, 350);
     },
     [checkCnpDuplicate, goStep]
   );
@@ -204,25 +190,13 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     if (next) setSemnaturaInvalida(false);
   }, []);
 
-  const continueFromCi = () => goStep(1);
-
   const continueFromDate = () => {
     if (!identityDone) {
       formRef.current?.classList.add("was-validated");
       failValidation();
       return;
     }
-    goStep(2);
-  };
-
-  const continueFromSign = () => {
-    const pad = padRef.current;
-    if (!pad || pad.isEmpty()) {
-      setSemnaturaInvalida(true);
-      failValidation();
-      return;
-    }
-    goStep(3);
+    goStep(1);
   };
 
   if (pdfDataUrl) {
@@ -264,14 +238,14 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
       id="formular-230"
       data-step={wizardStep}
       className={
-        "f230" +
+        "f230 f230-simple" +
         (variant === "standalone" ? " formular-230-standalone" : "") +
         (mobileUi ? " f230-mobile-wizard" : "")
       }
     >
       {variant === "embedded" ? <h2 className="projects-title">Formular 230</h2> : null}
 
-      <ol className="f230-progress" aria-label="Pașii formularului">
+      <ol className="f230-progress f230-progress-2" aria-label="Pașii formularului">
         {STEPS.map((step, i) => {
           const done = doneFlags[i];
           const now = i === currentStep;
@@ -283,19 +257,13 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 aria-current={now ? "step" : undefined}
                 onClick={() => {
                   goStep(i);
-                  // Desktop keeps all panels visible — scroll to the section.
                   if (!prefersForm230MobileUi()) scrollToId(step.id);
                 }}
               >
                 <span className="f230-progress-n" aria-hidden>
                   {done ? "✓" : i + 1}
                 </span>
-                <span className="f230-progress-label">
-                  {step.label}
-                  {step.optional ? (
-                    <span className="f230-progress-opt">opțional</span>
-                  ) : null}
-                </span>
+                <span className="f230-progress-label">{step.label}</span>
               </button>
             </li>
           );
@@ -321,14 +289,10 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           setSemnaturaInvalida(nextSigInvalid);
           if (nextGdprInvalid || nextSigInvalid || cnpBad || !form.checkValidity()) {
             form.classList.add("was-validated");
-            if (mobileUi || prefersForm230MobileUi()) {
-              if (cnpBad || !nume.trim() || !prenume.trim() || !localitate.trim() || !judet.trim()) {
-                goStep(1);
-              } else if (nextSigInvalid) {
-                goStep(2);
-              } else {
-                goStep(3);
-              }
+            if (cnpBad || !nume.trim() || !prenume.trim() || !localitate.trim() || !judet.trim()) {
+              goStep(0);
+            } else {
+              goStep(1);
             }
             failValidation();
             return;
@@ -350,13 +314,19 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
             if (!res.ok) {
               if (j.error === "duplicate") {
                 setCnpDuplicate(true);
-                goStep(1);
+                goStep(0);
                 if (!prefersForm230MobileUi()) scrollToId("f230-date");
                 return;
               }
               if (j.error === "cnp") setCnpDuplicate(false);
-              if (j.error === "semnatura") setSemnaturaInvalida(true);
-              if (j.error === "gdpr") setGdprInvalid(true);
+              if (j.error === "semnatura") {
+                setSemnaturaInvalida(true);
+                goStep(1);
+              }
+              if (j.error === "gdpr") {
+                setGdprInvalid(true);
+                goStep(1);
+              }
               setSubmitError(
                 j.error === "cnp"
                   ? "CNP-ul nu este valid."
@@ -376,48 +346,45 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
         noValidate
       >
         <div
-          id="f230-ci"
-          className={
-            "col-12 f230-ci-slot" +
-            (ciFilled ? " is-done" : "") +
-            (wizardStep === 0 ? " f230-panel-active" : "")
-          }
-          data-f230-panel="0"
-        >
-          <CiUploadCard sessionId={ciSessionId} onExtracted={applyOcr} />
-          <div className="f230-step-nav">
-            <button type="button" className="btn btn-primary-pink-round" onClick={continueFromCi}>
-              {ciFilled ? "Continuă la date" : "Continuă fără poză"}
-            </button>
-          </div>
-        </div>
-
-        <div
           id="f230-date"
           className={
             "col-12 f230-panel" +
             (identityDone ? " f230-panel-ok" : "") +
-            (wizardStep === 1 ? " f230-panel-active" : "")
+            (wizardStep === 0 ? " f230-panel-active" : "")
           }
-          data-f230-panel="1"
+          data-f230-panel="0"
         >
-          <p className="f230-panel-kicker">{identityDone ? "Completat" : "Pasul 2"}</p>
+          <p className="f230-panel-kicker">{identityDone ? "Completat" : "Pasul 1 din 2"}</p>
           <h3 className="f230-panel-title">Datele tale</h3>
-          <p className="f230-panel-help">Verifică-le, chiar dacă au venit de pe CI.</p>
-          <div className="row">
+          <p className="f230-panel-help">
+            {ciFilled ? "Verifică datele preluate de pe CI." : "Completează câmpurile — sau fotografiază CI-ul ca să meargă mai repede."}
+          </p>
+
+          <div className={"f230-ci-inline" + (ciFilled ? " is-done" : "")}>
+            <CiUploadCard
+              sessionId={ciSessionId}
+              onExtracted={applyOcr}
+              compact={mobileUi}
+              kicker="Opțional"
+              title="Fotografiază CI-ul"
+            />
+          </div>
+
+          <div className="row f230-fields">
             <div className="col-12 col-sm-6 pb-2">
               <label htmlFor="nume" className="form-label">
                 Nume(*)
               </label>
               <input
                 type="text"
-                className={"form-control" + (filledFlash.nume ? " ci-field-in" : "")}
+                className={"form-control form-control-lg" + (filledFlash.nume ? " ci-field-in" : "")}
                 id="nume"
                 name="nume"
                 required
                 value={nume}
                 onChange={(e) => setNume(e.target.value)}
                 autoComplete="family-name"
+                enterKeyHint="next"
               />
               <div className="invalid-feedback">Completează câmpul cu numele tău.</div>
             </div>
@@ -427,13 +394,14 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               </label>
               <input
                 type="text"
-                className={"form-control" + (filledFlash.prenume ? " ci-field-in" : "")}
+                className={"form-control form-control-lg" + (filledFlash.prenume ? " ci-field-in" : "")}
                 id="prenume"
                 name="prenume"
                 required
                 value={prenume}
                 onChange={(e) => setPrenume(e.target.value)}
                 autoComplete="given-name"
+                enterKeyHint="next"
               />
               <div className="invalid-feedback">Completează câmpul cu prenumele tău.</div>
             </div>
@@ -447,7 +415,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                   inputMode="numeric"
                   autoComplete="off"
                   className={
-                    "form-control" +
+                    "form-control form-control-lg" +
                     (cnpStatus === "valid" ? " is-valid" : "") +
                     (cnpBlocked ? " is-invalid" : "") +
                     (cnpDuplicate && cnpStatus === "valid" ? " f230-cnp-warn-field" : "") +
@@ -465,6 +433,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                     setCnpDuplicate(false);
                   }}
                   onBlur={() => void checkCnpDuplicate(cnp)}
+                  enterKeyHint="next"
                 />
                 {cnpChecking ? (
                   <span className="f230-spinner f230-spinner-inline" aria-label="Verific CNP-ul" />
@@ -496,13 +465,14 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               </label>
               <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-lg"
                 id="localitate"
                 name="localitate"
                 required
                 value={localitate}
                 onChange={(e) => setLocalitate(e.target.value)}
                 autoComplete="address-level2"
+                enterKeyHint="next"
               />
               <div className="invalid-feedback">Completează câmpul cu localitatea ta.</div>
             </div>
@@ -512,23 +482,25 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               </label>
               <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-lg"
                 id="judet"
                 name="judet"
                 required
                 value={judet}
                 onChange={(e) => setJudet(e.target.value)}
                 autoComplete="address-level1"
+                enterKeyHint="done"
               />
               <div className="invalid-feedback">Completează câmpul cu județul tău.</div>
             </div>
           </div>
           <div className="f230-step-nav">
-            <button type="button" className="btn btn-secondary-pink" onClick={() => goStep(0)}>
-              Înapoi
-            </button>
-            <button type="button" className="btn btn-primary-pink-round" onClick={continueFromDate}>
-              Continuă la semnătură
+            <button
+              type="button"
+              className="btn btn-primary-pink-round f230-next-btn"
+              onClick={continueFromDate}
+            >
+              Continuă — semnează
             </button>
           </div>
         </div>
@@ -537,55 +509,20 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           id="f230-sign"
           className={
             "col-12 f230-panel" +
-            (signed ? " f230-panel-ok" : "") +
-            (wizardStep === 2 ? " f230-panel-active" : "")
+            (finishDone ? " f230-panel-ok" : "") +
+            (wizardStep === 1 ? " f230-panel-active" : "")
           }
-          data-f230-panel="2"
+          data-f230-panel="1"
         >
-          <p className="f230-panel-kicker">{signed ? "Completat" : "Pasul 3"}</p>
-          <h3 className="f230-panel-title">Semnează</h3>
-          <p className="f230-panel-help">Ca pe hârtie, în chenar. O poți șterge și o iei de la capăt.</p>
-          <MobileSignaturePad ref={padRef} invalid={semnaturaInvalida} onSignedChange={onSignedChange} />
-          <div className="f230-step-nav">
-            <button type="button" className="btn btn-secondary-pink" onClick={() => goStep(1)}>
-              Înapoi
-            </button>
-            <button type="button" className="btn btn-primary-pink-round" onClick={continueFromSign}>
-              Continuă
-            </button>
-          </div>
-        </div>
+          <p className="f230-panel-kicker">{finishDone ? "Gata de trimis" : "Pasul 2 din 2"}</p>
+          <h3 className="f230-panel-title">Semnează și trimite</h3>
+          <p className="f230-panel-help">Semnează cu degetul, bifează acordul, apoi apasă Trimite.</p>
 
-        <div
-          id="f230-send"
-          className={
-            "col-12 f230-panel" +
-            (sendReady ? " f230-panel-ok" : "") +
-            (wizardStep === 3 ? " f230-panel-active" : "")
-          }
-          data-f230-panel="3"
-        >
-          <p className="f230-panel-kicker">{sendReady ? "Gata de trimis" : "Pasul 4"}</p>
-          <h3 className="f230-panel-title">Confirmă și trimite</h3>
+          <MobileSignaturePad ref={padRef} invalid={semnaturaInvalida} onSignedChange={onSignedChange} />
+
           <fieldset className="col-12 pb-2 duration-fieldset">
-            <legend className="form-label">Perioada de redirecționare(*)</legend>
-            <div className="f230-choice">
-              <label className={"f230-choice-opt" + (ani === "1" ? " is-on" : "")}>
-                <input
-                  className="form-check-input"
-                  type="radio"
-                  name="an"
-                  id="an"
-                  value="1"
-                  checked={ani === "1"}
-                  onChange={() => setAni("1")}
-                  required
-                />
-                <span className="f230-choice-copy">
-                  <strong>1 an</strong>
-                  <span>Doar pentru acest an fiscal</span>
-                </span>
-              </label>
+            <legend className="form-label">Perioada(*)</legend>
+            <div className="f230-choice f230-choice-compact">
               <label className={"f230-choice-opt" + (ani === "2" ? " is-on" : "")}>
                 <input
                   className="form-check-input"
@@ -599,17 +536,29 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 />
                 <span className="f230-choice-copy">
                   <strong>2 ani</strong>
-                  <span>Recomandat — nu mai completezi anul viitor</span>
+                  <span>Recomandat</span>
+                </span>
+              </label>
+              <label className={"f230-choice-opt" + (ani === "1" ? " is-on" : "")}>
+                <input
+                  className="form-check-input"
+                  type="radio"
+                  name="an"
+                  id="an"
+                  value="1"
+                  checked={ani === "1"}
+                  onChange={() => setAni("1")}
+                  required
+                />
+                <span className="f230-choice-copy">
+                  <strong>1 an</strong>
+                  <span>Doar anul ăsta</span>
                 </span>
               </label>
             </div>
           </fieldset>
+
           <div className="col-12 gdpr-block">
-            <p className="gdpr-short">
-              Folosim datele doar pentru Formularul 230 către ANAF, în favoarea Asociației Vă Ajutăm
-              din Dej. Poza CI nu părăsește dispozitivul tău.{" "}
-              <Link href="/230/confidentialitate">Informare privind datele personale</Link>
-            </p>
             <label className={"gdpr-consent" + (gdprInvalid ? " gdpr-consent-invalid" : "")}>
               <input
                 type="checkbox"
@@ -623,7 +572,8 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 }}
               />
               <span>
-                Am citit informarea și sunt de acord cu prelucrarea datelor pentru Formularul 230 (*)
+                Sunt de acord cu prelucrarea datelor pentru Formularul 230 (*){" "}
+                <Link href="/230/confidentialitate">Detalii</Link>
               </span>
             </label>
             {gdprInvalid ? (
@@ -632,23 +582,24 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
               </p>
             ) : null}
           </div>
-          <p className="form-required-hint">Câmpurile marcate cu (*) sunt obligatorii.</p>
+
           {submitError ? (
             <p className="form-submit-error" role="alert">
               {submitError}
             </p>
           ) : null}
-          <div className="col-12 pb-2 submit-button-wrapper f230-step-nav f230-step-nav-submit">
-            <button type="button" className="btn btn-secondary-pink f230-mobile-only" onClick={() => goStep(2)}>
+
+          <div className="f230-step-nav f230-step-nav-submit">
+            <button type="button" className="btn btn-secondary-pink f230-mobile-only" onClick={() => goStep(0)}>
               Înapoi
             </button>
             <button
               type="submit"
-              className="btn btn-primary-pink-round submit-button"
+              className="btn btn-primary-pink-round submit-button f230-next-btn"
               id="save"
               disabled={submitting || cnpBlocked || cnpChecking}
             >
-              {submitting ? "Se trimite…" : "Generează și Trimite"}
+              {submitting ? "Se trimite…" : "Trimite formularul"}
             </button>
           </div>
         </div>

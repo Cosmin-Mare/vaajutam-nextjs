@@ -27,6 +27,8 @@ type Props = {
   onExtracted: (data: CiOcrResult) => void;
   hidePhoneQr?: boolean;
   showSteps?: boolean;
+  /** Minimal UI: one camera action + gallery link (phone / inline in date step). */
+  compact?: boolean;
   kicker?: string;
   title?: string;
   afterRecognize?: (data: CiOcrResult) => Promise<boolean | void>;
@@ -129,6 +131,7 @@ export function CiUploadCard({
   onExtracted,
   hidePhoneQr,
   showSteps,
+  compact = false,
   kicker = "Opțional — ca să meargă mai repede",
   title = "Fotografiază cartea de identitate",
   afterRecognize,
@@ -158,8 +161,9 @@ export function CiUploadCard({
   const [camGuide, setCamGuide] = useState(false);
   const [isPhoneUi, setIsPhoneUi] = useState(false);
   const [nativeCapture, setNativeCapture] = useState(false);
-  // QR is always rendered when we have a session; CSS hides it under 720px.
-  const showQr = Boolean(sessionId) && !hidePhoneQr;
+  const useCompact = compact || isPhoneUi;
+  // QR only on roomy desktop layouts (CSS also hides under 720px).
+  const showQr = Boolean(sessionId) && !hidePhoneQr && !useCompact;
   const choosingKindFirst = askKindFirst && !kind && (stage === "idle" || stage === "error") && !hasPending;
   const dropzone = !choosingKindFirst && (stage === "idle" || (stage === "error" && !hasPending));
 
@@ -274,16 +278,14 @@ export function CiUploadCard({
   };
 
   const openNativeCamera = () => {
-    // Direct user gesture → label/input is more reliable than .click() on iOS Safari.
     cameraRef.current?.click();
   };
 
   const startCamera = () => {
     setError(null);
-    // Phones: native OS camera is more reliable than getUserMedia overlays
-    // (permissions, black preview, clipped shutter, iOS quirks).
-    if (nativeCapture || !canUseLiveCamera() || camFailed.current) {
-      setCamGuide(true);
+    // Compact / phone: open the OS camera immediately — no tip sheet, no getUserMedia.
+    if (useCompact || nativeCapture || !canUseLiveCamera() || camFailed.current) {
+      openNativeCamera();
       return;
     }
     setCamPending(true);
@@ -295,7 +297,7 @@ export function CiUploadCard({
       .catch(() => {
         setCamPending(false);
         camFailed.current = true;
-        setCamGuide(true);
+        openNativeCamera();
       });
   };
   const pickKind = (next: CiKind) => {
@@ -339,18 +341,23 @@ export function CiUploadCard({
       </>
     ) : stage === "picking" ? (
       "Ca să citesc corect numele și CNP-ul."
+    ) : useCompact ? (
+      <>
+        Opțional — completează mai rapid. <strong>Poza rămâne pe telefon.</strong>
+      </>
     ) : (
       <>
         Citirea se face pe dispozitivul tău. <strong>Poza nu se trimite și nu se salvează.</strong>
       </>
     );
 
-  const showFlowSteps = showSteps || stage === "picking" || stage === "reading";
+  const showFlowSteps = !useCompact && (showSteps || stage === "picking" || stage === "reading");
 
   return (
     <div
       className={
         "ci-card" +
+        (useCompact ? " ci-card-compact" : "") +
         (stage === "reading" ? " ci-card-busy" : "") +
         (stage === "done" ? " ci-card-ok" : "") +
         (stage === "partial" || stage === "error" ? " ci-card-err" : "")
@@ -393,9 +400,21 @@ export function CiUploadCard({
       ) : null}
 
       <div className="ci-card-head">
-        <p className="ci-card-kicker">{kicker}</p>
-        <p className="ci-card-title">{flowTitle}</p>
-        <p className="ci-card-help">{flowHelp}</p>
+        {useCompact && dropzone ? (
+          <>
+            <p className="ci-card-kicker">{kicker}</p>
+            <p className="ci-card-title">{title}</p>
+            <p className="ci-card-help">
+              Completează mai rapid. <strong>Poza rămâne pe telefon.</strong>
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="ci-card-kicker">{kicker}</p>
+            <p className="ci-card-title">{flowTitle}</p>
+            <p className="ci-card-help">{flowHelp}</p>
+          </>
+        )}
       </div>
 
       {choosingKindFirst ? (
@@ -448,94 +467,104 @@ export function CiUploadCard({
 
       {dropzone ? (
         <div className={"ci-card-split" + (showQr ? " ci-card-split-qr" : "")}>
-          <div
-            className={
-              "ci-drop" + (dragOver ? " ci-drop-hot" : "") + (stage === "error" ? " ci-drop-err" : "")
-            }
-            onDragEnter={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={(e) => {
-              if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-              setDragOver(false);
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragOver(false);
-              const file = e.dataTransfer.files?.[0];
-              if (file) void acceptPhoto(file);
-            }}
-          >
-            {preview && stage === "error" ? (
-              <button type="button" className="ci-preview ci-preview-static" onClick={retryCamera}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preview} alt="Poza aleasă — apasă ca să schimbi" />
-              </button>
-            ) : (
-              <button type="button" className="ci-drop-art" onClick={retryCamera}>
-                <span className="ci-id-float">
-                  <CiIdArt kind={kind} />
-                </span>
-                <span className="ci-drop-hint">
-                  {dragOver
-                    ? "Lasă poza aici"
-                    : kind === "old"
-                      ? "Așază buletinul vechi în cadru, pe lumină"
-                      : kind === "new"
-                        ? "Așază CI-ul nou în cadru, pe lumină"
-                        : "Așază buletinul în cadru, pe lumină"}
-                </span>
-                <ul className="ci-guide">
-                  {kind === "old" ? (
-                    <>
-                      <li>CNP-ul (roșu) sus, lângă fotografie</li>
-                      <li>Numele și prenumele sub CNP</li>
-                      <li>Cele două rânduri de jos vizibile</li>
-                    </>
-                  ) : kind === "new" ? (
-                    <>
-                      <li>Fotografia în stânga, tot cardul drept</li>
-                      <li>Numele și prenumele sus în dreapta</li>
-                      <li>CNP-ul mai jos, tot în dreapta — fără spate</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>Fața cu fotografia, tot cardul drept</li>
-                      <li>Fără reflexii pe plastic</li>
-                      <li>Apoi ne spui dacă e CI nou sau vechi</li>
-                    </>
-                  )}
-                </ul>
-              </button>
-            )}
-            <div className={"ci-drop-actions" + (isPhoneUi ? " ci-drop-actions-stack" : "")}>
-              {/* On phone: camera first. On desktop with QR: gallery first (phone does the photo). */}
-              {isPhoneUi || !showQr ? (
-                <>
-                  <label htmlFor="ci-camera-input" className="btn btn-primary-pink-round ci-drop-primary">
-                    Fotografiază
-                  </label>
-                  <label htmlFor="ci-gallery-input" className="btn btn-secondary-pink">
-                    Alege din galerie
-                  </label>
-                </>
-              ) : (
-                <>
-                  <label htmlFor="ci-gallery-input" className="btn btn-primary-pink-round ci-drop-primary">
-                    Alege o poză
-                  </label>
-                  <button type="button" className="btn btn-secondary-pink" onClick={retryCamera}>
-                    Fotografiază
-                  </button>
-                </>
-              )}
+          {useCompact ? (
+            <div className="ci-compact-actions">
+              <label htmlFor="ci-camera-input" className="btn btn-primary-pink-round ci-drop-primary">
+                Fotografiază CI-ul
+              </label>
+              <label htmlFor="ci-gallery-input" className="ci-text-btn ci-gallery-link">
+                sau alege din galerie
+              </label>
             </div>
-          </div>
+          ) : (
+            <div
+              className={
+                "ci-drop" + (dragOver ? " ci-drop-hot" : "") + (stage === "error" ? " ci-drop-err" : "")
+              }
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={(e) => {
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                setDragOver(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file) void acceptPhoto(file);
+              }}
+            >
+              {preview && stage === "error" ? (
+                <button type="button" className="ci-preview ci-preview-static" onClick={retryCamera}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={preview} alt="Poza aleasă — apasă ca să schimbi" />
+                </button>
+              ) : (
+                <button type="button" className="ci-drop-art" onClick={retryCamera}>
+                  <span className="ci-id-float">
+                    <CiIdArt kind={kind} />
+                  </span>
+                  <span className="ci-drop-hint">
+                    {dragOver
+                      ? "Lasă poza aici"
+                      : kind === "old"
+                        ? "Așază buletinul vechi în cadru, pe lumină"
+                        : kind === "new"
+                          ? "Așază CI-ul nou în cadru, pe lumină"
+                          : "Așază buletinul în cadru, pe lumină"}
+                  </span>
+                  <ul className="ci-guide">
+                    {kind === "old" ? (
+                      <>
+                        <li>CNP-ul (roșu) sus, lângă fotografie</li>
+                        <li>Numele și prenumele sub CNP</li>
+                        <li>Cele două rânduri de jos vizibile</li>
+                      </>
+                    ) : kind === "new" ? (
+                      <>
+                        <li>Fotografia în stânga, tot cardul drept</li>
+                        <li>Numele și prenumele sus în dreapta</li>
+                        <li>CNP-ul mai jos, tot în dreapta — fără spate</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Fața cu fotografia, tot cardul drept</li>
+                        <li>Fără reflexii pe plastic</li>
+                        <li>Apoi ne spui dacă e CI nou sau vechi</li>
+                      </>
+                    )}
+                  </ul>
+                </button>
+              )}
+              <div className="ci-drop-actions">
+                {showQr ? (
+                  <>
+                    <label htmlFor="ci-gallery-input" className="btn btn-primary-pink-round ci-drop-primary">
+                      Alege o poză
+                    </label>
+                    <button type="button" className="btn btn-secondary-pink" onClick={retryCamera}>
+                      Fotografiază
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <label htmlFor="ci-camera-input" className="btn btn-primary-pink-round ci-drop-primary">
+                      Fotografiază
+                    </label>
+                    <label htmlFor="ci-gallery-input" className="btn btn-secondary-pink">
+                      Alege din galerie
+                    </label>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
           {showQr ? (
             <div className="ci-phone-panel ci-phone-panel-open">
               <CiPhoneQr sessionId={sessionId} onExtracted={(data) => void applyParsed(data, true)} />

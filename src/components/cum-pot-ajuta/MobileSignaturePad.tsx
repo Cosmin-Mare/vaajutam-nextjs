@@ -63,7 +63,7 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
       const width = Math.max(1, Math.floor(wrap.clientWidth || canvas.clientWidth || 0));
       if (width < 2) return;
-      const height = width < 520 ? 200 : 168;
+      const height = width < 520 ? 240 : 168;
       if (width === lastW && height === lastH && canvas.width > 0) return;
       lastW = width;
       lastH = height;

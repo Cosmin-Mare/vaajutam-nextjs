@@ -1239,7 +1239,8 @@ canvas#signature-canvas {
   font-weight: 600;
 }
 
-.page-230-flowline em {
+.page-230-flowline em,
+.page-230-flow-opt {
   font-style: normal;
   font-weight: 500;
   color: #adb5bd;
@@ -2463,7 +2464,7 @@ canvas#signature-canvas {
   width: 100%;
   min-height: 200px;
   background: #f8f9fa;
-  border: 1px dashed #ced4da;
+  border: 1.5px dashed #ced4da;
   border-radius: 0.5rem;
   touch-action: none;
   overscroll-behavior: contain;
@@ -2474,6 +2475,12 @@ canvas#signature-canvas {
 @media (min-width: 520px) {
   .signature-wrap {
     min-height: 168px;
+  }
+}
+
+@media (max-width: 519px) {
+  .signature-wrap {
+    min-height: 240px;
   }
 }
 
@@ -2630,11 +2637,11 @@ canvas#signature-canvas {
 .f230-progress {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.35rem;
   margin: 0 0 1.1rem;
   padding: 0.45rem 0.4rem;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   position: sticky;
   top: 4.5rem;
   z-index: 20;
@@ -2642,6 +2649,58 @@ canvas#signature-canvas {
   border: 1px solid #eee;
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(33, 37, 41, 0.05);
+}
+
+.f230-progress-2 {
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.f230-ci-inline {
+  margin: 0 0 1.15rem;
+}
+
+.f230-ci-inline .ci-card {
+  box-shadow: none;
+}
+
+.f230-next-btn {
+  width: 100%;
+  min-height: 3.25rem;
+  font-size: 1.15rem;
+}
+
+.f230-choice-compact .f230-choice-opt {
+  padding: 0.65rem 0.75rem;
+}
+
+.ci-card-compact {
+  padding: 0.85rem 1rem;
+}
+
+.ci-card-compact .ci-card-title {
+  font-size: 1.05rem;
+}
+
+.ci-compact-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.ci-compact-actions .ci-drop-primary {
+  width: 100%;
+  min-height: 3rem;
+  text-align: center;
+}
+
+.ci-gallery-link {
+  text-align: center;
+  margin: 0;
+  padding: 0.35rem;
 }
 
 .f230-step-nav {
@@ -2686,8 +2745,13 @@ canvas#signature-canvas {
     font-size: 0.72rem;
   }
 
+  .signature-wrap {
+    min-height: 240px;
+  }
+
   .signature-wrap canvas {
-    min-height: 200px;
+    min-height: 240px;
+    height: 240px;
   }
 
   .f230-step-nav {
