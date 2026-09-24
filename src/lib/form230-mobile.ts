@@ -1,11 +1,10 @@
-/** Narrow / touch layouts where Form 230 should prefer native camera & step UI. */
+/** Narrow layout where Form 230 should use the one-step wizard UI. */
 export function prefersForm230MobileUi(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    return (
-      window.matchMedia("(max-width: 720px)").matches ||
-      window.matchMedia("(pointer: coarse)").matches
-    );
+    // Width only — do not use (pointer: coarse); that hides desktop QR on touch laptops /
+    // automation environments that report a coarse pointer at any width.
+    return window.matchMedia("(max-width: 720px)").matches;
   } catch {
     return window.innerWidth <= 720;
   }
@@ -16,7 +15,6 @@ export function preferNativeCiCapture(): boolean {
   if (typeof window === "undefined") return false;
   try {
     if (window.matchMedia("(max-width: 720px)").matches) return true;
-    if (window.matchMedia("(pointer: coarse)").matches) return true;
   } catch {
     if (window.innerWidth <= 720) return true;
   }

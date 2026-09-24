@@ -7,6 +7,7 @@ export type MobileSignaturePadHandle = {
   isEmpty: () => boolean;
   toDataURL: () => string;
   clear: () => void;
+  resize: () => void;
 };
 
 type Props = {
@@ -22,6 +23,7 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const padRef = useRef<SignaturePad | null>(null);
   const drawingRef = useRef(false);
+  const resizeRef = useRef<() => void>(() => undefined);
   const [blank, setBlank] = useState(true);
 
   useEffect(() => {
@@ -29,14 +31,13 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
 
-    const narrow = wrap.clientWidth < 520;
+    const narrow = Math.max(wrap.clientWidth, window.innerWidth) < 520;
     const pad = new SignaturePad(canvas, {
       backgroundColor: "rgb(248, 249, 250)",
       penColor: "rgb(20, 20, 20)",
-      // Fingers need a thicker stroke than a mouse; thin pens look like dots on phones.
-      minWidth: narrow ? 1.8 : 1.2,
-      maxWidth: narrow ? 3.6 : 2.8,
-      minDistance: 2,
+      minWidth: narrow ? 2 : 1.2,
+      maxWidth: narrow ? 4 : 2.8,
+      minDistance: 1,
       velocityFilterWeight: 0.7,
     });
     padRef.current = pad;
@@ -53,34 +54,37 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
     pad.addEventListener("beginStroke", onBegin);
     pad.addEventListener("endStroke", onEnd);
 
-    let lastW = 0;
-    let lastH = 0;
+    let lastW = -1;
+    let lastH = -1;
     let resizeTimer = 0;
 
     const resizeNow = () => {
       if (drawingRef.current) return;
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const width = Math.max(1, Math.floor(wrap.clientWidth));
+      const width = Math.max(1, Math.floor(wrap.clientWidth || canvas.clientWidth || 0));
+      if (width < 2) return;
       const height = width < 520 ? 200 : 168;
-      if (width === lastW && height === lastH && canvas.width) return;
+      if (width === lastW && height === lastH && canvas.width > 0) return;
       lastW = width;
       lastH = height;
       const data = pad.toData();
-      // Match official Signature Pad DPI handling: size from layout box, then scale ctx.
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       canvas.width = Math.floor(width * ratio);
       canvas.height = Math.floor(height * ratio);
       const ctx = canvas.getContext("2d");
+      // Reset transform then scale — matches Signature Pad high-DPI guidance.
       if (ctx) ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
       pad.clear();
       if (data.length) pad.fromData(data);
       syncBlank();
     };
 
+    resizeRef.current = resizeNow;
+
     const scheduleResize = () => {
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(resizeNow, 80);
+      resizeTimer = window.setTimeout(resizeNow, 50);
     };
 
     resizeNow();
@@ -97,6 +101,7 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
       padRef.current = null;
     };
   }, []);
+
   useEffect(() => {
     onSignedChange?.(!blank);
   }, [blank, onSignedChange]);
@@ -108,6 +113,7 @@ export const MobileSignaturePad = forwardRef<MobileSignaturePadHandle, Props>(fu
       padRef.current?.clear();
       setBlank(true);
     },
+    resize: () => resizeRef.current(),
   }));
 
   return (

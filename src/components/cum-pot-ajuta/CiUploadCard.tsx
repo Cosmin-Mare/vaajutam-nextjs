@@ -158,7 +158,8 @@ export function CiUploadCard({
   const [camGuide, setCamGuide] = useState(false);
   const [isPhoneUi, setIsPhoneUi] = useState(false);
   const [nativeCapture, setNativeCapture] = useState(false);
-  const showQr = Boolean(sessionId) && !hidePhoneQr && !isPhoneUi;
+  // QR is always rendered when we have a session; CSS hides it under 720px.
+  const showQr = Boolean(sessionId) && !hidePhoneQr;
   const choosingKindFirst = askKindFirst && !kind && (stage === "idle" || stage === "error") && !hasPending;
   const dropzone = !choosingKindFirst && (stage === "idle" || (stage === "error" && !hasPending));
 
@@ -169,12 +170,9 @@ export function CiUploadCard({
     };
     sync();
     const mqNarrow = window.matchMedia("(max-width: 720px)");
-    const mqCoarse = window.matchMedia("(pointer: coarse)");
     mqNarrow.addEventListener("change", sync);
-    mqCoarse.addEventListener("change", sync);
     return () => {
       mqNarrow.removeEventListener("change", sync);
-      mqCoarse.removeEventListener("change", sync);
     };
   }, []);
   const clearPreview = () => {

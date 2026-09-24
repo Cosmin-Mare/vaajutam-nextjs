@@ -2491,8 +2491,17 @@ canvas#signature-canvas {
 .signature-wrap canvas {
   display: block;
   width: 100%;
+  height: 200px;
   touch-action: none;
   cursor: crosshair;
+  /* Avoid browser/OS gestures stealing the stroke on phones */
+  -ms-touch-action: none;
+}
+
+@media (min-width: 520px) {
+  .signature-wrap canvas {
+    height: 168px;
+  }
 }
 
 .signature-placeholder {
@@ -2689,16 +2698,26 @@ canvas#signature-canvas {
     display: inline-flex !important;
   }
 
-  /* One panel at a time on phones — avoids a mile of scroll and clipped controls. */
-  .f230[data-step] > .f230-form > [data-f230-panel] {
-    display: none !important;
+  /* One panel at a time on phones — keeps inactive panels laid out (absolute +
+     visibility) so the signature canvas keeps a real width for DPI sizing. */
+  .f230[data-step] > .f230-form {
+    position: relative;
   }
 
-  .f230[data-step="0"] > .f230-form > [data-f230-panel="0"],
-  .f230[data-step="1"] > .f230-form > [data-f230-panel="1"],
-  .f230[data-step="2"] > .f230-form > [data-f230-panel="2"],
-  .f230[data-step="3"] > .f230-form > [data-f230-panel="3"] {
+  .f230[data-step] > .f230-form > [data-f230-panel] {
     display: block !important;
+  }
+
+  .f230[data-step] > .f230-form > [data-f230-panel]:not(.f230-panel-active) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+    overflow: hidden;
   }
 }
 

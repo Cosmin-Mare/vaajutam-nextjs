@@ -86,12 +86,9 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     const sync = () => setMobileUi(prefersForm230MobileUi());
     sync();
     const mq = window.matchMedia("(max-width: 720px)");
-    const mq2 = window.matchMedia("(pointer: coarse)");
     mq.addEventListener("change", sync);
-    mq2.addEventListener("change", sync);
     return () => {
       mq.removeEventListener("change", sync);
-      mq2.removeEventListener("change", sync);
     };
   }, []);
 
@@ -100,9 +97,9 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
     setWizardStep(next);
     window.setTimeout(() => {
       scrollToId("formular-230");
-      // Signature canvas is display:none on other steps — force a layout pass when shown.
       window.dispatchEvent(new Event("resize"));
-    }, 50);
+      padRef.current?.resize();
+    }, 60);
   }, []);
 
   const checkCnpDuplicate = useCallback(async (value: string) => {
@@ -378,7 +375,15 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
         }}
         noValidate
       >
-        <div id="f230-ci" className={"col-12 f230-ci-slot" + (ciFilled ? " is-done" : "")} data-f230-panel="0">
+        <div
+          id="f230-ci"
+          className={
+            "col-12 f230-ci-slot" +
+            (ciFilled ? " is-done" : "") +
+            (wizardStep === 0 ? " f230-panel-active" : "")
+          }
+          data-f230-panel="0"
+        >
           <CiUploadCard sessionId={ciSessionId} onExtracted={applyOcr} />
           <div className="f230-step-nav">
             <button type="button" className="btn btn-primary-pink-round" onClick={continueFromCi}>
@@ -389,7 +394,11 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
 
         <div
           id="f230-date"
-          className={"col-12 f230-panel" + (identityDone ? " f230-panel-ok" : "")}
+          className={
+            "col-12 f230-panel" +
+            (identityDone ? " f230-panel-ok" : "") +
+            (wizardStep === 1 ? " f230-panel-active" : "")
+          }
           data-f230-panel="1"
         >
           <p className="f230-panel-kicker">{identityDone ? "Completat" : "Pasul 2"}</p>
@@ -526,7 +535,11 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
 
         <div
           id="f230-sign"
-          className={"col-12 f230-panel" + (signed ? " f230-panel-ok" : "")}
+          className={
+            "col-12 f230-panel" +
+            (signed ? " f230-panel-ok" : "") +
+            (wizardStep === 2 ? " f230-panel-active" : "")
+          }
           data-f230-panel="2"
         >
           <p className="f230-panel-kicker">{signed ? "Completat" : "Pasul 3"}</p>
@@ -545,7 +558,11 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
 
         <div
           id="f230-send"
-          className={"col-12 f230-panel" + (sendReady ? " f230-panel-ok" : "")}
+          className={
+            "col-12 f230-panel" +
+            (sendReady ? " f230-panel-ok" : "") +
+            (wizardStep === 3 ? " f230-panel-active" : "")
+          }
           data-f230-panel="3"
         >
           <p className="f230-panel-kicker">{sendReady ? "Gata de trimis" : "Pasul 4"}</p>
