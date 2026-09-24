@@ -2665,6 +2665,31 @@ canvas#signature-canvas {
   box-shadow: none;
 }
 
+.f230-date-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.f230-date-stack .f230-step-nav {
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  /* Fields first on phone; optional CI after — less friction to start typing. */
+  .f230-date-stack .f230-fields {
+    order: 1;
+  }
+
+  .f230-date-stack .f230-ci-inline {
+    order: 2;
+    margin: 1rem 0 0.25rem;
+  }
+
+  .f230-date-stack .f230-step-nav {
+    order: 3;
+  }
+}
+
 .f230-next-btn {
   width: 100%;
   min-height: 3.25rem;
@@ -2676,11 +2701,16 @@ canvas#signature-canvas {
 }
 
 .ci-card-compact {
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 0.9rem;
+  background: #fafafa;
 }
 
 .ci-card-compact .ci-card-title {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
+}
+
+.ci-card-compact .ci-card-help {
+  font-size: 0.88rem;
 }
 
 .ci-compact-actions {

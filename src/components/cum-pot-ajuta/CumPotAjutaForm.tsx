@@ -357,151 +357,156 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           <p className="f230-panel-kicker">{identityDone ? "Completat" : "Pasul 1 din 2"}</p>
           <h3 className="f230-panel-title">Datele tale</h3>
           <p className="f230-panel-help">
-            {ciFilled ? "Verifică datele preluate de pe CI." : "Completează câmpurile — sau fotografiază CI-ul ca să meargă mai repede."}
+            {ciFilled
+              ? "Verifică datele preluate de pe CI, apoi continuă."
+              : "Completează câmpurile de mai jos."}
           </p>
 
-          <div className={"f230-ci-inline" + (ciFilled ? " is-done" : "")}>
-            <CiUploadCard
-              sessionId={ciSessionId}
-              onExtracted={applyOcr}
-              compact={mobileUi}
-              kicker="Opțional"
-              title="Fotografiază CI-ul"
-            />
-          </div>
+          <div className="f230-date-stack">
+            <div className="f230-ci-inline">
+              <CiUploadCard
+                sessionId={ciSessionId}
+                onExtracted={applyOcr}
+                compact={mobileUi}
+                kicker="Opțional"
+                title="Mai rapid cu poza CI"
+              />
+            </div>
 
-          <div className="row f230-fields">
-            <div className="col-12 col-sm-6 pb-2">
-              <label htmlFor="nume" className="form-label">
-                Nume(*)
-              </label>
-              <input
-                type="text"
-                className={"form-control form-control-lg" + (filledFlash.nume ? " ci-field-in" : "")}
-                id="nume"
-                name="nume"
-                required
-                value={nume}
-                onChange={(e) => setNume(e.target.value)}
-                autoComplete="family-name"
-                enterKeyHint="next"
-              />
-              <div className="invalid-feedback">Completează câmpul cu numele tău.</div>
-            </div>
-            <div className="col-12 col-sm-6 pb-2">
-              <label htmlFor="prenume" className="form-label">
-                Prenume(*)
-              </label>
-              <input
-                type="text"
-                className={"form-control form-control-lg" + (filledFlash.prenume ? " ci-field-in" : "")}
-                id="prenume"
-                name="prenume"
-                required
-                value={prenume}
-                onChange={(e) => setPrenume(e.target.value)}
-                autoComplete="given-name"
-                enterKeyHint="next"
-              />
-              <div className="invalid-feedback">Completează câmpul cu prenumele tău.</div>
-            </div>
-            <div className="col-12 col-sm-6 pb-2 has-validation">
-              <label htmlFor="cnp" className="form-label">
-                CNP(*)
-              </label>
-              <div className="f230-cnp-wrap">
+            <div className="row f230-fields">
+              <div className="col-12 col-sm-6 pb-2">
+                <label htmlFor="nume" className="form-label">
+                  Nume(*)
+                </label>
                 <input
                   type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  className={
-                    "form-control form-control-lg" +
-                    (cnpStatus === "valid" ? " is-valid" : "") +
-                    (cnpBlocked ? " is-invalid" : "") +
-                    (cnpDuplicate && cnpStatus === "valid" ? " f230-cnp-warn-field" : "") +
-                    (filledFlash.cnp ? " ci-field-in" : "")
-                  }
-                  id="cnp"
-                  name="cnp"
+                  className={"form-control form-control-lg" + (filledFlash.nume ? " ci-field-in" : "")}
+                  id="nume"
+                  name="nume"
                   required
-                  maxLength={13}
-                  value={cnp}
-                  onChange={(e) => {
-                    cnpCheckGen.current += 1;
-                    setCnpChecking(false);
-                    setCnp(normalizeCnp(e.target.value));
-                    setCnpDuplicate(false);
-                  }}
-                  onBlur={() => void checkCnpDuplicate(cnp)}
+                  value={nume}
+                  onChange={(e) => setNume(e.target.value)}
+                  autoComplete="family-name"
                   enterKeyHint="next"
                 />
-                {cnpChecking ? (
-                  <span className="f230-spinner f230-spinner-inline" aria-label="Verific CNP-ul" />
-                ) : null}
+                <div className="invalid-feedback">Completează câmpul cu numele tău.</div>
               </div>
-              {cnpStatus === "empty" ? (
-                <div className="invalid-feedback">Completează câmpul cu CNP-ul tău.</div>
-              ) : null}
-              {cnpStatus === "incomplete" ? (
-                <div className="cnp-live-hint">CNP-ul are 13 cifre.</div>
-              ) : null}
-              {cnpStatus === "invalid" ? (
-                <div className="invalid-feedback d-block">CNP-ul nu este valid.</div>
-              ) : null}
-              {cnpStatus === "valid" && !cnpChecking ? (
-                <div className="valid-feedback d-block">CNP valid.</div>
-              ) : null}
-              {cnpDuplicate ? (
-                <p className="cnp-duplicate-warn" role="status">
-                  Există deja un formular 230 cu acest CNP pentru anul fiscal curent.
-                </p>
-              ) : null}
-              {cnpChecking ? <div className="cnp-live-hint">Verific dacă e deja trimis…</div> : null}
+              <div className="col-12 col-sm-6 pb-2">
+                <label htmlFor="prenume" className="form-label">
+                  Prenume(*)
+                </label>
+                <input
+                  type="text"
+                  className={"form-control form-control-lg" + (filledFlash.prenume ? " ci-field-in" : "")}
+                  id="prenume"
+                  name="prenume"
+                  required
+                  value={prenume}
+                  onChange={(e) => setPrenume(e.target.value)}
+                  autoComplete="given-name"
+                  enterKeyHint="next"
+                />
+                <div className="invalid-feedback">Completează câmpul cu prenumele tău.</div>
+              </div>
+              <div className="col-12 col-sm-6 pb-2 has-validation">
+                <label htmlFor="cnp" className="form-label">
+                  CNP(*)
+                </label>
+                <div className="f230-cnp-wrap">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    className={
+                      "form-control form-control-lg" +
+                      (cnpStatus === "valid" ? " is-valid" : "") +
+                      (cnpBlocked ? " is-invalid" : "") +
+                      (cnpDuplicate && cnpStatus === "valid" ? " f230-cnp-warn-field" : "") +
+                      (filledFlash.cnp ? " ci-field-in" : "")
+                    }
+                    id="cnp"
+                    name="cnp"
+                    required
+                    maxLength={13}
+                    value={cnp}
+                    onChange={(e) => {
+                      cnpCheckGen.current += 1;
+                      setCnpChecking(false);
+                      setCnp(normalizeCnp(e.target.value));
+                      setCnpDuplicate(false);
+                    }}
+                    onBlur={() => void checkCnpDuplicate(cnp)}
+                    enterKeyHint="next"
+                  />
+                  {cnpChecking ? (
+                    <span className="f230-spinner f230-spinner-inline" aria-label="Verific CNP-ul" />
+                  ) : null}
+                </div>
+                {cnpStatus === "empty" ? (
+                  <div className="invalid-feedback">Completează câmpul cu CNP-ul tău.</div>
+                ) : null}
+                {cnpStatus === "incomplete" ? (
+                  <div className="cnp-live-hint">CNP-ul are 13 cifre.</div>
+                ) : null}
+                {cnpStatus === "invalid" ? (
+                  <div className="invalid-feedback d-block">CNP-ul nu este valid.</div>
+                ) : null}
+                {cnpStatus === "valid" && !cnpChecking ? (
+                  <div className="valid-feedback d-block">CNP valid.</div>
+                ) : null}
+                {cnpDuplicate ? (
+                  <p className="cnp-duplicate-warn" role="status">
+                    Există deja un formular 230 cu acest CNP pentru anul fiscal curent.
+                  </p>
+                ) : null}
+                {cnpChecking ? <div className="cnp-live-hint">Verific dacă e deja trimis…</div> : null}
+              </div>
+              <div className="col-sm-6 d-none d-sm-block" aria-hidden="true" />
+              <div className="col-12 col-sm-6 pb-2">
+                <label htmlFor="localitate" className="form-label">
+                  Localitate(*)
+                </label>
+                <input
+                  type="text"
+                  className="form-control form-control-lg"
+                  id="localitate"
+                  name="localitate"
+                  required
+                  value={localitate}
+                  onChange={(e) => setLocalitate(e.target.value)}
+                  autoComplete="address-level2"
+                  enterKeyHint="next"
+                />
+                <div className="invalid-feedback">Completează câmpul cu localitatea ta.</div>
+              </div>
+              <div className="col-12 col-sm-6 pb-2">
+                <label htmlFor="judet" className="form-label">
+                  Județ(*)
+                </label>
+                <input
+                  type="text"
+                  className="form-control form-control-lg"
+                  id="judet"
+                  name="judet"
+                  required
+                  value={judet}
+                  onChange={(e) => setJudet(e.target.value)}
+                  autoComplete="address-level1"
+                  enterKeyHint="done"
+                />
+                <div className="invalid-feedback">Completează câmpul cu județul tău.</div>
+              </div>
             </div>
-            <div className="col-sm-6 d-none d-sm-block" aria-hidden="true" />
-            <div className="col-12 col-sm-6 pb-2">
-              <label htmlFor="localitate" className="form-label">
-                Localitate(*)
-              </label>
-              <input
-                type="text"
-                className="form-control form-control-lg"
-                id="localitate"
-                name="localitate"
-                required
-                value={localitate}
-                onChange={(e) => setLocalitate(e.target.value)}
-                autoComplete="address-level2"
-                enterKeyHint="next"
-              />
-              <div className="invalid-feedback">Completează câmpul cu localitatea ta.</div>
+
+            <div className="f230-step-nav">
+              <button
+                type="button"
+                className="btn btn-primary-pink-round f230-next-btn"
+                onClick={continueFromDate}
+              >
+                Continuă — semnează
+              </button>
             </div>
-            <div className="col-12 col-sm-6 pb-2">
-              <label htmlFor="judet" className="form-label">
-                Județ(*)
-              </label>
-              <input
-                type="text"
-                className="form-control form-control-lg"
-                id="judet"
-                name="judet"
-                required
-                value={judet}
-                onChange={(e) => setJudet(e.target.value)}
-                autoComplete="address-level1"
-                enterKeyHint="done"
-              />
-              <div className="invalid-feedback">Completează câmpul cu județul tău.</div>
-            </div>
-          </div>
-          <div className="f230-step-nav">
-            <button
-              type="button"
-              className="btn btn-primary-pink-round f230-next-btn"
-              onClick={continueFromDate}
-            >
-              Continuă — semnează
-            </button>
           </div>
         </div>
 

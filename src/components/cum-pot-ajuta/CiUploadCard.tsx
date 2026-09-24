@@ -469,7 +469,7 @@ export function CiUploadCard({
         <div className={"ci-card-split" + (showQr ? " ci-card-split-qr" : "")}>
           {useCompact ? (
             <div className="ci-compact-actions">
-              <label htmlFor="ci-camera-input" className="btn btn-primary-pink-round ci-drop-primary">
+              <label htmlFor="ci-camera-input" className="btn btn-secondary-pink ci-drop-primary">
                 Fotografiază CI-ul
               </label>
               <label htmlFor="ci-gallery-input" className="ci-text-btn ci-gallery-link">
