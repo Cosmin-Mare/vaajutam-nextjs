@@ -2644,26 +2644,45 @@ canvas#signature-canvas {
 .f230-date-stack {
   display: flex;
   flex-direction: column;
+  gap: 0.15rem;
 }
 
 .f230-date-stack .f230-step-nav {
   margin-top: 0.85rem;
 }
 
-@media (max-width: 720px) {
-  /* Fields first on phone; optional CI after — less friction to start typing. */
-  .f230-date-stack .f230-fields {
-    order: 1;
-  }
+.f230-fields-block {
+  margin-top: 0.35rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid #eee;
+}
 
-  .f230-date-stack .f230-ci-inline {
-    order: 2;
-    margin: 1rem 0 0.25rem;
-  }
+.f230-fields-head {
+  margin: 0 0 0.85rem;
+}
 
-  .f230-date-stack .f230-step-nav {
-    order: 3;
-  }
+.f230-fields-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #e20074;
+}
+
+.f230-fields-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.25;
+}
+
+.f230-fields-help {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #6c757d;
+  line-height: 1.4;
 }
 
 .f230-next-btn {

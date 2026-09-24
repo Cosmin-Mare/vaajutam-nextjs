@@ -31,6 +31,8 @@ type Props = {
   compact?: boolean;
   kicker?: string;
   title?: string;
+  /** Optional override for the card help line under the title. */
+  help?: ReactNode;
   afterRecognize?: (data: CiOcrResult) => Promise<boolean | void>;
   doneExtra?: (ctx: { paired: boolean }) => ReactNode;
 };
@@ -134,6 +136,7 @@ export function CiUploadCard({
   compact = false,
   kicker = "Opțional — ca să meargă mai repede",
   title = "Fotografiază cartea de identitate",
+  help,
   afterRecognize,
   doneExtra,
 }: Props) {
@@ -333,6 +336,18 @@ export function CiUploadCard({
     : stage === "picking"
       ? "Ce fel de CI este în poză?"
       : title;
+  const defaultCompactHelp = (
+    <>
+      Citim numele și CNP-ul pe telefon și le punem în câmpurile de mai jos.{" "}
+      <strong>Poza nu se trimite.</strong> Poți sări peste și să completezi manual.
+    </>
+  );
+  const defaultDesktopHelp = (
+    <>
+      Citim numele și CNP-ul pe dispozitivul tău și completăm câmpurile de mai jos.{" "}
+      <strong>Poza nu se trimite și nu se salvează.</strong>
+    </>
+  );
   const flowHelp =
     choosingKindFirst ? (
       <>
@@ -341,14 +356,12 @@ export function CiUploadCard({
       </>
     ) : stage === "picking" ? (
       "Ca să citesc corect numele și CNP-ul."
+    ) : help != null ? (
+      help
     ) : useCompact ? (
-      <>
-        Opțional — completează mai rapid. <strong>Poza rămâne pe telefon.</strong>
-      </>
+      defaultCompactHelp
     ) : (
-      <>
-        Citirea se face pe dispozitivul tău. <strong>Poza nu se trimite și nu se salvează.</strong>
-      </>
+      defaultDesktopHelp
     );
 
   const showFlowSteps = !useCompact && (showSteps || stage === "picking" || stage === "reading");
@@ -400,21 +413,9 @@ export function CiUploadCard({
       ) : null}
 
       <div className="ci-card-head">
-        {useCompact && dropzone ? (
-          <>
-            <p className="ci-card-kicker">{kicker}</p>
-            <p className="ci-card-title">{title}</p>
-            <p className="ci-card-help">
-              Completează mai rapid. <strong>Poza rămâne pe telefon.</strong>
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="ci-card-kicker">{kicker}</p>
-            <p className="ci-card-title">{flowTitle}</p>
-            <p className="ci-card-help">{flowHelp}</p>
-          </>
-        )}
+        <p className="ci-card-kicker">{kicker}</p>
+        <p className="ci-card-title">{useCompact && dropzone ? title : flowTitle}</p>
+        <p className="ci-card-help">{flowHelp}</p>
       </div>
 
       {choosingKindFirst ? (

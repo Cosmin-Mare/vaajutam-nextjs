@@ -325,8 +325,8 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
           <h3 className="f230-panel-title">Datele tale</h3>
           <p className="f230-panel-help">
             {ciFilled
-              ? "Verifică datele preluate de pe CI, apoi continuă."
-              : "Completează câmpurile de mai jos."}
+              ? "Verifică datele preluate de pe CI în câmpurile de mai jos, apoi continuă."
+              : "Mai întâi poza CI (opțional), apoi completează sau verifică datele."}
           </p>
 
           <div className="f230-date-stack">
@@ -335,12 +335,31 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 sessionId={ciSessionId}
                 onExtracted={applyOcr}
                 compact={mobileUi}
-                kicker="Opțional"
-                title="Mai rapid cu poza CI"
+                kicker="1 · Opțional"
+                title="Poza CI completează câmpurile"
+                help={
+                  <>
+                    Încarcă poza cărții de identitate: citim numele și CNP-ul pe dispozitivul tău și
+                    le punem în câmpurile de mai jos. <strong>Poza nu se trimite.</strong> Poți sări
+                    peste și să completezi manual.
+                  </>
+                }
               />
             </div>
 
-            <div className="row f230-fields">
+            <div className="f230-fields-block">
+              <div className="f230-fields-head">
+                <p className="f230-fields-kicker">2 · Date</p>
+                <h4 className="f230-fields-title">
+                  {ciFilled ? "Verifică datele preluate" : "Completează datele"}
+                </h4>
+                <p className="f230-fields-help">
+                  {ciFilled
+                    ? "Corectează dacă e nevoie, apoi adaugă localitatea și județul."
+                    : "Dacă nu ai folosit poza, completează aici. Localitatea și județul se scriu mereu manual."}
+                </p>
+              </div>
+              <div className="row f230-fields">
               <div className="col-12 col-sm-6 pb-2">
                 <label htmlFor="nume" className="form-label">
                   Nume(*)
@@ -463,6 +482,7 @@ export function CumPotAjutaForm({ variant = "embedded" }: Props) {
                 />
                 <div className="invalid-feedback">Completează câmpul cu județul tău.</div>
               </div>
+            </div>
             </div>
 
             <div className="f230-step-nav">
