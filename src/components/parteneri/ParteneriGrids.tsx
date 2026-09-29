@@ -1,10 +1,11 @@
+import { cachedMediaUrl } from "@/lib/cached-media-url";
 import type { SponsorPartner } from "@/lib/types";
 
 function SponsorTile({ row }: { row: SponsorPartner }) {
   const inner = (
     <div className="sponsor">
       {row.logoUrl ? (
-        <img src={row.logoUrl} alt={row.name} loading="lazy" decoding="async" />
+        <img src={cachedMediaUrl(row.logoUrl)} alt={row.name} loading="lazy" decoding="async" />
       ) : null}
       {row.name ? <p>{row.name}</p> : <p className="noname" />}
     </div>

@@ -2,6 +2,7 @@ import type { GetStaticProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { SeoHead } from "@/components/site/SeoHead";
+import { cachedMediaUrl } from "@/lib/cached-media-url";
 import { CMS_MEDIA_FALLBACK } from "@/lib/cms-media";
 import { loadProjects } from "@/lib/queries";
 import { LIST_REVALIDATE } from "@/lib/revalidate";
@@ -52,7 +53,7 @@ function ProjectBlock({
                 <div className="card shadow-sm">
                   <Link className="post-img-link" href={`/proiect/${project.id}`}>
                     <img
-                      src={project.thumbnailUrl ?? CMS_MEDIA_FALLBACK}
+                      src={cachedMediaUrl(project.thumbnailUrl) || CMS_MEDIA_FALLBACK}
                       style={{ objectFit: "fill" }}
                       alt={`Miniatură proiect: ${project.title}`}
                     />

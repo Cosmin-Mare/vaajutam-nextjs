@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { isFirebaseConfigured } from "@/lib/firebase-admin";
-import { firestoreGetPosts } from "@/lib/firestore";
+import { firestorePing } from "@/lib/firestore";
 
 /** GET /api/health/db — Firestore connectivity (name kept for existing monitors). */
 export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
@@ -12,10 +12,9 @@ export default async function handler(_req: NextApiRequest, res: NextApiResponse
     });
   }
   try {
-    const posts = await firestoreGetPosts();
+    const ok = await firestorePing();
     return res.status(200).json({
-      status: "ok",
-      postCount: posts.length,
+      status: ok ? "ok" : "empty",
       backend: "firestore",
     });
   } catch (e) {
