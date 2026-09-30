@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { NewsletterSubscribeBlock } from "@/components/noutati/NewsletterSubscribeBlock";
 import { SeoHead } from "@/components/site/SeoHead";
+import { cachedMediaUrl } from "@/lib/cached-media-url";
 import { CMS_MEDIA_FALLBACK } from "@/lib/cms-media";
 import { loadPosts } from "@/lib/queries";
 import { LIST_REVALIDATE } from "@/lib/revalidate";
@@ -63,7 +64,7 @@ export default function NoutatiPage({ posts }: Props) {
                   <div className="card shadow-sm">
                     <Link className="post-img-link" href={`/noutate/${post.id}`}>
                       <img
-                        src={post.thumbnailUrl ?? CMS_MEDIA_FALLBACK}
+                        src={cachedMediaUrl(post.thumbnailUrl) || CMS_MEDIA_FALLBACK}
                         alt={`Miniatură articol: ${post.title}`}
                       />
                     </Link>

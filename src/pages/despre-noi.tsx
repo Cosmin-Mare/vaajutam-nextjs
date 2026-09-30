@@ -2,6 +2,7 @@ import type { GetStaticProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { SeoHead } from "@/components/site/SeoHead";
+import { cachedMediaUrl } from "@/lib/cached-media-url";
 import { loadMembers } from "@/lib/queries";
 import { MEMBERS_REVALIDATE } from "@/lib/revalidate";
 import { SITE_NAME } from "@/lib/seo";
@@ -13,7 +14,7 @@ function TeamMemberTile({ member }: { member: Member }) {
   const inner = (
     <div className="member">
       <img
-        src={member.photoUrl ?? `/images/members/${member.name.replaceAll(" ", "_")}.webp`}
+        src={cachedMediaUrl(member.photoUrl) || `/images/members/${member.name.replaceAll(" ", "_")}.webp`}
         className="pb-2"
         alt={`Foto ${member.name}`}
       />

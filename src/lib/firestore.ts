@@ -203,11 +203,28 @@ export async function firestoreGetPostById(id: number): Promise<Post | undefined
   const direct = await coll.doc(String(id)).get();
   if (direct.exists) return docToPost(direct.id, direct.data()!);
 
-  const all = await coll.get();
-  for (const d of all.docs) {
-    if (postLogicalId(d.id, d.data()) === id) return docToPost(d.id, d.data());
+  const padded = String(id).padStart(3, "0");
+  if (padded !== String(id)) {
+    const paddedDoc = await coll.doc(padded).get();
+    if (paddedDoc.exists && postLogicalId(paddedDoc.id, paddedDoc.data()!) === id) {
+      return docToPost(paddedDoc.id, paddedDoc.data()!);
+    }
   }
+
+  const byNumber = await coll.where("id", "==", id).limit(1).get();
+  const numbered = byNumber.docs[0];
+  if (numbered) return docToPost(numbered.id, numbered.data());
+
+  const byString = await coll.where("id", "==", String(id)).limit(1).get();
+  const asString = byString.docs[0];
+  if (asString) return docToPost(asString.id, asString.data());
   return undefined;
+}
+
+/** One document read, for health checks. A full collection read is billed the same as a page view. */
+export async function firestorePing(): Promise<boolean> {
+  const snap = await db().collection(postsCollection()).limit(1).get();
+  return !snap.empty;
 }
 
 export async function firestoreGetProjects(): Promise<Project[]> {
