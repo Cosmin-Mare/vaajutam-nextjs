@@ -48,15 +48,15 @@
 .home-carousel-skeleton {
   position: relative;
   width: 100%;
-  min-height: 42vh;
+  min-height: calc(100vh - 105px);
   margin: 0;
   background: #f8f9fa;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-@media (min-width: 990px) {
+@media (min-width: 900px) {
   .home-carousel-skeleton {
-    min-height: 50vh;
+    min-height: 93vh;
   }
 }
 

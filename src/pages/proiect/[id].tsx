@@ -108,12 +108,12 @@ export default function ProiectPage({ project, photos, thumbnail }: PageProps) {
             <div className="d-grid gap-2 d-sm-flex post-button-container">
               <Link
                 className="btn btn-primary-pink-round btn-lg px-4 gap-3 mx-5 mx-lg-0"
-                href="/cum-pot-ajuta#donez"
+                href="/cum-pot-ajuta#formular-230"
               >
-                Donează
-              </Link>
-              <Link className="btn btn-secondary-pink btn-lg px-4 mx-5" href="/cum-pot-ajuta">
                 Cum poți ajuta
+              </Link>
+              <Link className="btn btn-secondary-pink btn-lg px-4 mx-5" href="/cum-pot-ajuta#donez">
+                Donează
               </Link>
             </div>
           </div>
@@ -125,13 +125,19 @@ export default function ProiectPage({ project, photos, thumbnail }: PageProps) {
           className="d-block w-100 project-img"
           id="carousel-img-1"
           alt={`Imagine principală: ${project.title}`}
+          decoding="async"
         />
       </div>
       <div className="photos-container">
         <div className="photos">
           {photos.map((p, i) => (
             <div className="photo" key={p}>
-              <img src={p} alt={`${project.title} — fotografie ${i + 1}`} />
+              <img
+                src={p}
+                alt={`${project.title} — fotografie ${i + 1}`}
+                loading="lazy"
+                decoding="async"
+              />
             </div>
           ))}
         </div>

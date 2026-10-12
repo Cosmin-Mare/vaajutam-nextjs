@@ -56,6 +56,8 @@ function ProjectBlock({
                       src={cachedMediaUrl(project.thumbnailUrl) || CMS_MEDIA_FALLBACK}
                       style={{ objectFit: "fill" }}
                       alt={`Miniatură proiect: ${project.title}`}
+                      loading="lazy"
+                      decoding="async"
                     />
                   </Link>
                   <div className="card-body">
@@ -64,12 +66,12 @@ function ProjectBlock({
                       <div className="project-buttons">
                         <Link
                           className="btn btn-primary-pink-round"
-                          href="/cum-pot-ajuta#donez"
+                          href="/cum-pot-ajuta#formular-230"
                         >
-                          Doneaza
-                        </Link>
-                        <Link className="btn btn-secondary-pink" href="/cum-pot-ajuta">
                           Cum poți ajuta
+                        </Link>
+                        <Link className="btn btn-secondary-pink" href="/cum-pot-ajuta#donez">
+                          Donează
                         </Link>
                       </div>
                     </div>

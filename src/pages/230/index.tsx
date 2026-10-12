@@ -16,8 +16,8 @@ export default function Formular230Page() {
         <h1 className="projects-title">Formular 230</h1>
         <p className="lead">
           Redirecționezi 3,5% din impozitul pe venitul din <strong>{taxYear}</strong> către{" "}
-          {FORM230_ORG.nameDisplay}. Nu te costă nimic extra. Poți fotografia buletinul — citirea e
-          pe dispozitivul tău, poza nu se trimite.
+          {FORM230_ORG.nameDisplay}. Nu te costă nimic în plus. Completează datele de mai jos —
+          durează cam un minut.
         </p>
         <p className="page-230-cif">
           Beneficiar: {FORM230_ORG.nameDisplay} · CIF {FORM230_ORG.cui}

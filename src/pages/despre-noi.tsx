@@ -17,6 +17,8 @@ function TeamMemberTile({ member }: { member: Member }) {
         src={cachedMediaUrl(member.photoUrl) || `/images/members/${member.name.replaceAll(" ", "_")}.webp`}
         className="pb-2"
         alt={`Foto ${member.name}`}
+        loading="lazy"
+        decoding="async"
       />
       <h2>{member.name}</h2>
       <h3>{member.status}</h3>
@@ -61,6 +63,8 @@ export default function DespreNoiPage({ council, notCouncil }: Props) {
           src="/images/carousel/landscape/carousel-img-1.webp"
           className="d-block w-100 header-img"
           alt="Voluntari și activități Vă Ajutăm din Dej"
+          fetchPriority="high"
+          decoding="async"
         />
       </section>
       <section id="about-us">

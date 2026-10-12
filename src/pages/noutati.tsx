@@ -59,13 +59,15 @@ export default function NoutatiPage({ posts }: Props) {
         <div className="album py-5 bg-body-tertiary">
           <div className="container">
             <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3 post-album">
-              {posts.map((post) => (
+              {posts.map((post, index) => (
                 <div className="col" key={post.id}>
                   <div className="card shadow-sm">
                     <Link className="post-img-link" href={`/noutate/${post.id}`}>
                       <img
                         src={cachedMediaUrl(post.thumbnailUrl) || CMS_MEDIA_FALLBACK}
                         alt={`Miniatură articol: ${post.title}`}
+                        loading={index < 3 ? "eager" : "lazy"}
+                        decoding="async"
                       />
                     </Link>
                     <div className="card-body">
@@ -118,11 +120,11 @@ export default function NoutatiPage({ posts }: Props) {
           <div className="col-lg-8 mx-auto">
             <p className="lead mb-4">Orice contribuție are o valoare inestimabilă.</p>
             <div className="d-grid gap-2 d-sm-flex justify-content-sm-center">
-              <Link className="btn btn-primary-pink-round btn-lg px-4 gap-3 mx-5" href="/cum-pot-ajuta#donez">
-                Donează
-              </Link>
-              <Link className="btn btn-secondary-pink btn-lg px-4 mx-5" href="/cum-pot-ajuta">
+              <Link className="btn btn-primary-pink-round btn-lg px-4 gap-3 mx-5" href="/cum-pot-ajuta#formular-230">
                 Cum poți ajuta
+              </Link>
+              <Link className="btn btn-secondary-pink btn-lg px-4 mx-5" href="/cum-pot-ajuta#donez">
+                Donează
               </Link>
             </div>
           </div>

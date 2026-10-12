@@ -53,6 +53,8 @@ export default function MotivePage() {
           src="/images/carousel/landscape/carousel-img-2.webp"
           className="d-block w-100 header-img"
           alt="Motive să ajuți comunitatea din Dej"
+          fetchPriority="high"
+          decoding="async"
         />
       </section>
       <section id="motive">
@@ -63,7 +65,7 @@ export default function MotivePage() {
                 <h1 className="fw-light projects-title">{m.title}</h1>
                 <p className="lead text-body-secondary">{m.text}</p>
               </div>
-              <img src={m.img} alt={m.title} />
+              <img src={m.img} alt={m.title} loading="lazy" decoding="async" />
             </div>
           ))}
         </section>
@@ -80,11 +82,11 @@ export default function MotivePage() {
               Ești gata să faci un bine?
             </h1>
             <div className="d-grid gap-2 d-sm-flex justify-content-sm-center">
-              <Link className="btn btn-primary-pink-round btn-lg px-4 gap-3 mx-5" href="/cum-pot-ajuta#donez">
-                Donează
-              </Link>
-              <Link className="btn btn-secondary-pink btn-lg px-4 mx-5" href="/cum-pot-ajuta">
+              <Link className="btn btn-primary-pink-round btn-lg px-4 gap-3 mx-5" href="/cum-pot-ajuta#formular-230">
                 Cum poți ajuta
+              </Link>
+              <Link className="btn btn-secondary-pink btn-lg px-4 mx-5" href="/cum-pot-ajuta#donez">
+                Donează
               </Link>
             </div>
           </div>

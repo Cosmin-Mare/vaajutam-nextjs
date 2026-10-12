@@ -35,15 +35,6 @@ export default function Form230PrivacyPage() {
           <li>Semnătura olografă desenată în formular</li>
           <li>Opțiunea 1 an / 2 ani</li>
         </ul>
-        <p>
-          <strong>Cartea de identitate:</strong> dacă alegi scanarea (pe acest dispozitiv sau prin
-          codul QR, pe telefon), poza este citită doar pe dispozitivul de pe care fotografiezi, ca
-          să precompletăm numele, prenumele și CNP-ul. Imaginea nu este încărcată pe server, nu
-          este salvată și nu o folosim după ce datele au fost extrase. Dacă scanezi QR-ul de pe
-          calculator, numele, prenumele și CNP-ul pot fi păstrate temporar (cel mult 15 minute),
-          ca să apară în formularul deschis pe calculator. Adresa nu se preia din CI (pe cărțile
-          noi nu mai este tipărită).
-        </p>
 
         <h2>De ce le folosim</h2>
         <ul>
@@ -85,7 +76,7 @@ export default function Form230PrivacyPage() {
           Păstrăm formularul (inclusiv PDF-ul și semnătura) pe durata campaniei și apoi cât este
           necesar pentru depunerea la ANAF și pentru obligațiile legale de arhivare fiscală
           (în practică până la 10 ani pentru documentele justificative). După aceea, datele se
-          șterg sau se anonimizează. Poza CI nu este păstrată deloc.
+          șterg sau se anonimizează.
         </p>
 
         <h2>Drepturile tale</h2>

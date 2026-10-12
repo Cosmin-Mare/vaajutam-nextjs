@@ -100,6 +100,8 @@ export default function NoutatePage({ post, photos, thumbnail }: PageProps) {
           className="d-block w-100 header-img"
           id="carousel-img-1"
           alt={`Imagine articol: ${post.title}`}
+          fetchPriority="high"
+          decoding="async"
         />
       </section>
       <section className="post-content">
@@ -113,15 +115,15 @@ export default function NoutatePage({ post, photos, thumbnail }: PageProps) {
             <div className="d-grid gap-2 d-sm-flex post-button-container">
               <Link
                 className="btn btn-primary-pink-round btn-lg px-4 gap-3 mx-5 mx-lg-0 mx-md-0 mx-sm-0"
-                href="/cum-pot-ajuta#donez"
+                href="/cum-pot-ajuta#formular-230"
               >
-                Donează
+                Cum poți ajuta
               </Link>
               <Link
                 className="btn btn-secondary-pink btn-lg px-4 mx-5"
-                href="/cum-pot-ajuta"
+                href="/cum-pot-ajuta#donez"
               >
-                Cum poți ajuta
+                Donează
               </Link>
             </div>
           </div>
@@ -131,7 +133,12 @@ export default function NoutatePage({ post, photos, thumbnail }: PageProps) {
         <div className="photos">
           {photos.map((p, i) => (
             <div className="photo" key={p}>
-              <img src={p} alt={`${post.title} — fotografie ${i + 1}`} />
+              <img
+                src={p}
+                alt={`${post.title} — fotografie ${i + 1}`}
+                loading="lazy"
+                decoding="async"
+              />
             </div>
           ))}
         </div>

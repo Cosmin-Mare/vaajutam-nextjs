@@ -39,8 +39,11 @@ export function Header() {
                 priority
               />
             </Link>
-            <Link className="btn btn-primary-pink-round portrait" href="/cum-pot-ajuta#donez">
-              Donează
+            <Link
+              className="btn btn-primary-pink-round portrait help-nav-btn"
+              href="/cum-pot-ajuta#formular-230"
+            >
+              Ajută
             </Link>
             <button
               className="navbar-toggler"
@@ -70,21 +73,21 @@ export function Header() {
                   );
                 })}
                 <li className="nav-item d-lg-none">
-                  <Link className="btn btn-secondary-pink w-100" href="/cum-pot-ajuta">
-                    Cum poți ajuta
+                  <Link className="btn btn-secondary-pink w-100" href="/cum-pot-ajuta#donez">
+                    Donează
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
-          <Link className="btn btn-secondary-pink landscape" href="/cum-pot-ajuta">
-            Cum Poți Ajuta
+          <Link className="btn btn-secondary-pink landscape" href="/cum-pot-ajuta#donez">
+            Donează
           </Link>
           <Link
-            className="btn btn-primary-pink-round landscape"
-            href="/cum-pot-ajuta#donez"
+            className="btn btn-primary-pink-round landscape help-nav-btn"
+            href="/cum-pot-ajuta#formular-230"
           >
-            Donează
+            Cum poți ajuta
           </Link>
         </nav>
       </div>

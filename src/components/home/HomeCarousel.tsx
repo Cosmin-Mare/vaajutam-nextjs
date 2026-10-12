@@ -1,209 +1,54 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-function buildCarouselHtml(isPortrait: boolean) {
-  if (isPortrait) {
-    return `<div
-          class="carousel slide portrait"
-          data-bs-ride="carousel"
-          data-interval="10000"
-        >
-          <div class="carousel-inner">
-            <div class="carousel-item active">
-              <img
-                src="images/carousel/portrait/carousel-img-9.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-1.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-2.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-3.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-4.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-5.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-7.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-8.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/portrait/carousel-img-10.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-          </div>
-        </div>`;
-  }
-  return `<div
-          class="carousel slide landscape"
-          data-bs-ride="carousel"
-          data-interval="10000"
-          data-bs-pause="false"
-        >
-          <div class="carousel-inner">
-            <div class="carousel-item active">
-              <img
-                src="/images/carousel/landscape/carousel-img-1.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-2.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-3.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-4.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-5.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-6.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-7.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-8.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-9.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-            <div class="carousel-item">
-              <img
-                src="images/carousel/landscape/carousel-img-10.webp"
-                class="d-block w-100"
-                id="carousel-img-1"
-                alt="Voluntariat și proiecte sociale — Vă Ajutăm din Dej"
-              />
-            </div>
-          </div>
-        </div>`;
-}
+const LANDSCAPE = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
+  (n) => `/images/carousel/landscape/carousel-img-${n}.webp`
+);
+const PORTRAIT = [9, 1, 2, 3, 4, 5, 7, 8, 10].map(
+  (n) => `/images/carousel/portrait/carousel-img-${n}.webp`
+);
 
-function onResize(onReady: () => void) {
-  void import("jquery").then((mod) => {
-    const $ = mod.default;
-    $(".carousel").remove();
-    if (window.innerWidth < 990) {
-      $("#main").append(buildCarouselHtml(true));
-    } else {
-      $("#main").append(buildCarouselHtml(false));
-    }
-    onReady();
-  });
-}
+const ALT = "Voluntariat și proiecte sociale — Vă Ajutăm din Dej";
 
 export function HomeCarousel() {
-  const [carouselReady, setCarouselReady] = useState(false);
-  const markReady = useCallback(() => setCarouselReady(true), []);
+  const [portrait, setPortrait] = useState<boolean | null>(null);
+  const [index, setIndex] = useState(0);
+  const [shown, setShown] = useState<number[]>([0, 1]);
+  const slides = portrait ? PORTRAIT : portrait === false ? LANDSCAPE : [];
 
   useEffect(() => {
-    onResize(markReady);
-    const onWinResize = () => onResize(() => {});
-    window.addEventListener("resize", onWinResize);
-    return () => {
-      window.removeEventListener("resize", onWinResize);
+    const mq = window.matchMedia("(max-width: 989px)");
+    const apply = () => {
+      setPortrait(mq.matches);
+      setIndex(0);
+      setShown([0, 1]);
     };
-  }, [markReady]);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  useEffect(() => {
+    if (!slides.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      setIndex((current) => (current + 1) % slides.length);
+    }, 10000);
+    return () => window.clearInterval(id);
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (!slides.length) return;
+    const upcoming = (index + 1) % slides.length;
+    setShown((prev) => {
+      if (prev.includes(index) && prev.includes(upcoming)) return prev;
+      return [...new Set([...prev, index, upcoming])];
+    });
+  }, [index, slides.length]);
 
   return (
-    <section id="main" style={{ position: "relative" }}>
+    <section id="main">
       <div
         className="container-fluid carousel-container bg-white"
         style={{ ["--bs-bg-opacity" as string]: 0.65 }}
@@ -211,11 +56,32 @@ export function HomeCarousel() {
         <h1 className="carousel-title">Vă Ajutăm din Dej</h1>
         <h2 className="carousel-subtitle">Împreună dăruim zâmbete</h2>
       </div>
-      {!carouselReady && (
+      {portrait === null ? (
+        <div className="home-carousel-skeleton" aria-label="Se încarcă caruselul" />
+      ) : (
         <div
-          className="home-carousel-skeleton"
-          aria-label="Se încarcă caruselul"
-        />
+          id="home-carousel"
+          className={`carousel slide ${portrait ? "portrait" : "landscape"}`}
+        >
+          <div className="carousel-inner">
+            {slides.map((src, i) => (
+              <div className={`carousel-item${i === index ? " active" : ""}`} key={src}>
+                {shown.includes(i) ? (
+                  <img
+                    src={src}
+                    className="d-block w-100"
+                    alt={i === 0 ? ALT : ""}
+                    decoding="async"
+                    fetchPriority={i === index ? "high" : "low"}
+                    loading={i === index ? "eager" : "lazy"}
+                  />
+                ) : (
+                  <div className="home-carousel-slide-hold" aria-hidden />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </section>
   );
