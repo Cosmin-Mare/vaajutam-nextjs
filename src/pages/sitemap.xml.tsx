@@ -45,7 +45,7 @@ ${urls
   .join("\n")}
 </urlset>`;
   res.setHeader("Content-Type", "text/xml; charset=utf-8");
-  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
+  res.setHeader("Cache-Control", "s-maxage=21600, stale-while-revalidate");
   res.write(body);
   res.end();
   return { props: {} };
